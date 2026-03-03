@@ -32,9 +32,28 @@
 - [ ] **EXP-02**: Export 3D visualization as a high-quality PNG.
 - [ ] **SYNC-01**: Cloud storage for calculations (requires user accounts).
 
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| UI-01 | Phase 1 | Pending |
+| UI-02 | Phase 1 | Pending |
+| UI-03 | Phase 1 | Pending |
+| UI-04 | Phase 4 | Pending |
+| CALC-01 | Phase 2 | Pending |
+| CALC-02 | Phase 5 | Pending |
+| CALC-03 | Phase 2 | Pending |
+| VIZ-01 | Phase 3 | Pending |
+| VIZ-02 | Phase 4 | Pending |
+| VIZ-03 | Phase 3 | Pending |
+| VIZ-04 | Phase 3 | Pending |
+| ADV-01 | Phase 5 | Pending |
+| HIST-01 | Phase 6 | Pending |
+| HIST-02 | Phase 6 | Pending |
+
 ## Out of Scope
 - **4D Animation:** Complex 4D rotations (tumbling) beyond simple static projections.
 - **Complex UI Components:** No multi-tab system or complex dashboard beyond the main calculator/visualizer.
 
 ---
-*Last updated: March 3, 2026 after requirements definition*
+*Last updated: March 3, 2026 after roadmap creation*
