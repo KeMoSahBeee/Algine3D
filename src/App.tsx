@@ -3,9 +3,11 @@ import './App.css' // Placeholder for future styles
 import { useMatrixStore } from './store/useMatrixStore'
 import { MatrixGrid } from './components/matrix/MatrixGrid'
 import { cn } from './lib/utils' // Import cn for conditional classes
+import * as math from 'mathjs' // Import mathjs
 
 function App() {
   const size = useMatrixStore((state) => state.size)
+  const grid = useMatrixStore((state) => state.grid) // Get the grid state
   const setSize = useMatrixStore((state) => state.setSize)
   const resetGrid = useMatrixStore((state) => state.resetGrid)
   const inputRef = useRef<HTMLInputElement>(null) // Ref for the currently focused cell
@@ -25,8 +27,31 @@ function App() {
   }
 
   const handleDoneClick = () => {
-    console.log('Matrix input done. Current matrix:', useMatrixStore.getState().grid)
-    // TODO: Proceed to calculation/visualization phase
+    try {
+      // Convert the flat grid array to a 2D matrix format expected by math.js
+      const matrixArray: number[][] = []
+      for (let i = 0; i < size; i++) {
+        matrixArray.push(grid.slice(i * size, (i + 1) * size) as number[])
+      }
+      const matrix = math.matrix(matrixArray)
+
+      console.log('Matrix Input:', matrix.toArray())
+
+      // Perform basic calculations
+      const determinant = math.det(matrix)
+      const transpose = math.transpose(matrix)
+      const inverse = math.size(matrix).every(dim => dim === 2) ? math.inv(matrix) : "Inverse only for square matrices (e.g., 2x2, 3x3)" // Basic check for inverse
+
+      console.log('Determinant:', determinant)
+      console.log('Transpose:', transpose.toArray())
+      console.log('Inverse:', typeof inverse === 'string' ? inverse : inverse.toArray())
+
+      // TODO: Proceed to calculation/visualization phase
+      // For now, just log results
+    } catch (error: any) {
+      console.error('Error performing matrix calculations:', error)
+      alert(`Error: ${error.message || 'An unknown error occurred'}`)
+    }
   }
 
   return (
@@ -71,7 +96,7 @@ function App() {
       </div>
 
       <p className="text-sm text-gray-400 mt-12">
-        Matrix input is ready. Use arrow keys, Space, and Enter to navigate.
+        Matrix input is ready. Use arrow keys, Space, and Enter to navigate. Click 'Done' to calculate.
       </p>
     </div>
   )
