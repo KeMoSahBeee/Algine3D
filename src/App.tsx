@@ -2,15 +2,40 @@ import React, { useState, useEffect, useRef } from 'react'
 import './App.css' // Placeholder for future styles
 import { useMatrixStore } from './store/useMatrixStore'
 import { MatrixGrid } from './components/matrix/MatrixGrid'
+import { VisualizationCanvas } from './components/visualization/VisualizationCanvas'
 import { cn } from './lib/utils' // Import cn for conditional classes
 import * as math from 'mathjs' // Import mathjs
+import * as THREE from 'three'; // Import THREE globally
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+
+
+// Ensure THREE and FontLoader are available globally for TextGeometry
+(window as any).THREE = THREE;
+const loader = new FontLoader();
+// You might need to load a font file here if you want text to render. 
+// For now, we'll assume a default font or handle it differently if needed.
+// Example: const font = loader.parse(fontData);
 
 function App() {
   const size = useMatrixStore((state) => state.size)
   const grid = useMatrixStore((state) => state.grid) // Get the grid state
   const setSize = useMatrixStore((state) => state.setSize)
   const resetGrid = useMatrixStore((state) => state.resetGrid)
-  const inputRef = useRef<HTMLInputElement>(null) // Ref for the currently focused cell
+  
+  const [calculationError, setCalculationError] = useState<string | null>(null)
+  const [calculationResult, setCalculationResult] = useState<any>(null) // Store results for visualization
+  const [font, setFont] = useState<THREE.Font | null>(null); // State for loaded font
+
+  // Load font for text geometry
+  useEffect(() => {
+    loader.load('/path/to/your/font.json', (loadedFont) => { // Replace with actual font path
+      setFont(loadedFont);
+    }, undefined, (err) => {
+      console.error('Error loading font:', err);
+    });
+  }, []);
+
 
   // Effect to focus the first cell after grid size changes or on initial load
   useEffect(() => {
@@ -23,34 +48,29 @@ function App() {
     const newSize = parseInt(e.target.value, 10)
     if (!isNaN(newSize) && newSize > 0) {
       setSize(newSize)
+      resetGrid() // Reset grid values when size changes
     }
   }
 
   const handleDoneClick = () => {
+    setCalculationError(null) // Clear previous errors
     try {
-      // Convert the flat grid array to a 2D matrix format expected by math.js
       const matrixArray: number[][] = []
       for (let i = 0; i < size; i++) {
-        matrixArray.push(grid.slice(i * size, (i + 1) * size) as number[])
+        const row = grid.slice(i * size, (i + 1) * size).map(val => Number(val) || 0) as number[]
+        matrixArray.push(row)
       }
       const matrix = math.matrix(matrixArray)
 
       console.log('Matrix Input:', matrix.toArray())
 
-      // Perform basic calculations
-      const determinant = math.det(matrix)
-      const transpose = math.transpose(matrix)
-      const inverse = math.size(matrix).every(dim => dim === 2) ? math.inv(matrix) : "Inverse only for square matrices (e.g., 2x2, 3x3)" // Basic check for inverse
+      // For now, we'll just use the matrix itself for visualization
+      // This assumes the matrix is suitable for vector representation (e.g., 3x3)
+      setCalculationResult(matrix) 
 
-      console.log('Determinant:', determinant)
-      console.log('Transpose:', transpose.toArray())
-      console.log('Inverse:', typeof inverse === 'string' ? inverse : inverse.toArray())
-
-      // TODO: Proceed to calculation/visualization phase
-      // For now, just log results
     } catch (error: any) {
-      console.error('Error performing matrix calculations:', error)
-      alert(`Error: ${error.message || 'An unknown error occurred'}`)
+      console.error('Error preparing matrix for calculation:', error)
+      setCalculationError(`Error: ${error.message || 'An unknown error occurred'}`)
     }
   }
 
@@ -88,7 +108,23 @@ function App() {
         </button>
       </div>
 
-      <MatrixGrid />
+      <div className="flex flex-col lg:flex-row gap-8 w-full justify-center items-center">
+        <MatrixGrid />
+
+        <div className="w-full lg:w-2/3 h-[500px] bg-gray-800 rounded-lg overflow-hidden">
+          {calculationError ? (
+            <div className="w-full h-full flex items-center justify-center text-red-500">
+              {calculationError}
+            </div>
+          ) : calculationResult ? (
+            <VisualizationCanvas font={font} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              Enter matrix values and click "Done" to visualize.
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Placeholder for History Panel */}
       <div className="mt-8 w-full max-w-4xl h-32 bg-gray-800 rounded-lg flex items-center justify-center">
@@ -96,7 +132,7 @@ function App() {
       </div>
 
       <p className="text-sm text-gray-400 mt-12">
-        Matrix input is ready. Use arrow keys, Space, and Enter to navigate. Click 'Done' to calculate.
+        Matrix input is ready. Use arrow keys, Space, and Enter to navigate. Click 'Done' to calculate and visualize.
       </p>
     </div>
   )
