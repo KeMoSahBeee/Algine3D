@@ -1,24 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite' // Ensure this is imported correctly
+import tailwindcss from '@tailwindcss/vite'
+import path from 'path'
 
 // https://vitejs.dev/config/
-export default defineConfig(({ command }) => ({
+export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), // Include the Tailwind CSS plugin
+    tailwindcss(),
   ],
-  css: {
-    postcss: {
-      plugins: [
-        tailwindcss,
-        autoprefixer,
-      ],
-    },
-  },
   resolve: {
     alias: {
-      '@': '/src', // Alias for src directory
+      '@': path.resolve(__dirname, './src'),
     },
   },
-}))
+})

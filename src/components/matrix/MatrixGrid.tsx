@@ -2,19 +2,23 @@ import React from 'react'
 import { useMatrixStore } from '@/store/useMatrixStore'
 import { MatrixCell } from './MatrixCell'
 
-export const MatrixGrid = () => {
-  const size = useMatrixStore((state) => state.size)
+export const MatrixGrid = ({ matrix }: { matrix: 'A' | 'B' | 'C' }) => {
+  const rows = useMatrixStore((state) => 
+    matrix === 'A' ? state.rowsA : matrix === 'B' ? state.rowsB : state.rowsC
+  );
+  const cols = useMatrixStore((state) => 
+    matrix === 'A' ? state.colsA : matrix === 'B' ? state.colsB : state.colsC
+  );
 
   return (
     <div
-      className="inline-grid p-4 border-l-4 border-r-4 border-gray-600 rounded-lg bg-gray-900"
+      className="grid gap-2"
       style={{
-        gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
-        gap: '0.5rem', // 8px
+        gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
       }}
     >
-      {Array.from({ length: size * size }).map((_, index) => (
-        <MatrixCell key={index} index={index} />
+      {Array.from({ length: rows * cols }).map((_, index) => (
+        <MatrixCell key={`${matrix}-${index}`} matrix={matrix} index={index} />
       ))}
     </div>
   )
