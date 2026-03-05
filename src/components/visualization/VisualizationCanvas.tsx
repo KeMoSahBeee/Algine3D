@@ -346,19 +346,19 @@ export const VisualizationCanvas = () => {
         <VisualizationScene isPanningMode={isPanningMode} />
       </Canvas>
 
-      {/* Floating Control Overlay */}
-      <div className="absolute bottom-24 right-6 z-20 flex flex-col gap-3">
+      {/* Floating Control Overlay - Moved up to avoid clashing with Cockpit */}
+      <div className="absolute top-44 right-6 z-20 flex flex-col gap-3">
         {/* Toggle Panning Mode */}
         <button 
           onClick={() => setIsPanningMode(!isPanningMode)}
-          className={`group glass-panel w-12 h-12 flex flex-col items-center justify-center shadow-2xl transition-all active:scale-90 rounded-full border ${
+          className={`group glass-panel w-16 h-16 sm:w-12 sm:h-12 flex flex-col items-center justify-center shadow-2xl transition-all active:scale-90 rounded-full border ${
             isPanningMode 
               ? 'bg-red-500/20 border-red-500 text-red-500' 
               : 'text-[var(--text-primary)] border-[var(--border-color)] hover:bg-[var(--button-bg-hover)]'
           }`}
           title={isPanningMode ? "Switch to Orbit Mode" : "Switch to Pan Mode"}
         >
-          {isPanningMode ? <Move size={20} /> : <RotateCw size={20} />}
+          {isPanningMode ? <Move size={24} /> : <RotateCw size={24} />}
           <span className="text-[7px] font-black uppercase tracking-tighter mt-0.5">
             {isPanningMode ? "Move" : "Orbit"}
           </span>
@@ -367,10 +367,10 @@ export const VisualizationCanvas = () => {
         {/* Recenter Camera */}
         <button 
           onClick={resetCamera}
-          className="group glass-panel w-12 h-12 flex flex-col items-center justify-center shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+          className="group glass-panel w-16 h-16 sm:w-12 sm:h-12 flex flex-col items-center justify-center shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
           title="Recenter Camera"
         >
-          <RotateCcw size={20} className="text-red-500 group-hover:rotate-[-45deg] transition-transform" />
+          <RotateCcw size={24} className="text-red-500 group-hover:rotate-[-45deg] transition-transform" />
           <span className="text-[7px] font-black uppercase tracking-tighter mt-0.5">Reset</span>
         </button>
       </div>

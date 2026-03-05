@@ -8,6 +8,7 @@ import * as math from 'mathjs'
 import { Info, ChevronDown, RotateCcw, ChevronLeft, ChevronRight, MonitorPlay, X, LayoutPanelTop } from 'lucide-react'
 
 function App() {
+  const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
   const isKeyboardOpen = useMatrixStore(state => state.isKeyboardOpen)
   const isSidebarOpen = useMatrixStore(state => state.isSidebarOpen)
   const isResultVisible = useMatrixStore(state => state.isResultVisible)
@@ -17,6 +18,12 @@ function App() {
   const labHeight = useMatrixStore(state => state.labHeight)
   const sidebarWidth = useMatrixStore(state => state.sidebarWidth)
   const currentCalculation = useMatrixStore((state) => state.currentCalculation)
+
+  React.useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="h-screen w-screen bg-[var(--bg-main)] overflow-hidden font-sans relative transition-colors duration-300">
@@ -49,9 +56,9 @@ function App() {
           {isSidebarOpen && (
             <button 
               onClick={toggleSidebar}
-              className="absolute top-4 right-4 p-2 hover:bg-[var(--button-bg-hover)] rounded-lg text-[var(--text-secondary)] hover:text-red-500 transition-colors"
+              className="absolute top-4 right-4 p-4 sm:p-2 hover:bg-[var(--button-bg-hover)] rounded-lg text-[var(--text-secondary)] hover:text-red-500 transition-colors"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={24} className="sm:w-5 sm:h-5" />
             </button>
           )}
         </div>
@@ -64,7 +71,7 @@ function App() {
         }`}
         style={{ 
           height: `${labHeight}px`,
-          left: isSidebarOpen ? (window.innerWidth < 640 ? '16px' : `${sidebarWidth + 32}px`) : '16px',
+          left: isSidebarOpen ? (windowWidth < 640 ? '16px' : `${sidebarWidth + 32}px`) : '16px',
           right: '16px'
         }}
       >
@@ -75,24 +82,24 @@ function App() {
 
       {/* RE-OPEN BUTTONS (Floating & Minimal) */}
       {!isSidebarOpen && (
-        <div className="absolute top-24 left-6 z-50 sm:top-28">
+        <div className="absolute top-24 left-6 z-50">
           <button 
             onClick={toggleSidebar}
-            className="group glass-panel w-12 h-12 sm:w-14 sm:h-32 flex flex-col items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+            className="group glass-panel w-16 h-16 sm:w-14 sm:h-32 flex flex-col items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
           >
-            <ChevronRight size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
+            <ChevronRight size={24} className="text-red-500 group-hover:scale-110 transition-transform" />
             <span className="hidden sm:block [writing-mode:vertical-lr] text-[9px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Sidebar On</span>
           </button>
         </div>
       )}
 
       {!isKeyboardOpen && (
-        <div className="absolute bottom-6 left-6 sm:left-auto sm:right-6 z-50">
+        <div className="absolute bottom-24 right-6 z-50">
           <button 
             onClick={toggleKeyboard}
-            className="group glass-panel w-12 h-12 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+            className="group glass-panel w-16 h-16 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
           >
-            <MonitorPlay size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
+            <MonitorPlay size={24} className="text-red-500 group-hover:scale-110 transition-transform" />
             <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Cockpit On</span>
             <ChevronDown size={18} className="hidden sm:block rotate-180 text-[var(--text-secondary)] opacity-50" />
           </button>
@@ -101,13 +108,13 @@ function App() {
 
       {/* RESULT OVERLAY TOGGLE (When Hidden) */}
       {!isResultVisible && currentCalculation && (
-        <div className={`absolute right-6 z-50 transition-all ${isSidebarOpen && window.innerWidth < 640 ? 'top-[4.5rem]' : 'top-24 sm:top-36'}`}>
+        <div className={`absolute right-6 z-50 transition-all ${windowWidth < 640 ? 'top-24' : 'top-24 sm:top-24'}`}>
           <button 
             onClick={toggleResultVisibility}
-            className="group glass-panel w-12 h-12 sm:w-auto sm:px-6 sm:h-12 flex items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+            className="group glass-panel w-16 h-16 sm:w-auto sm:px-4 sm:h-10 flex items-center justify-center gap-0 sm:gap-3 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
           >
-            <LayoutPanelTop size={18} className="text-red-500 group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60 uppercase">Show Result</span>
+            <LayoutPanelTop size={24} className="text-red-500 group-hover:scale-110 transition-transform sm:w-4 sm:h-4" />
+            <span className="hidden sm:block text-[9px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60 uppercase">Show Result</span>
           </button>
         </div>
       )}
@@ -116,8 +123,8 @@ function App() {
 
       {/* RESULT OVERLAY (Floating HUD) */}
       {currentCalculation && isResultVisible && (
-        <div className={`absolute right-4 sm:right-6 z-30 w-[calc(100vw-32px)] sm:max-w-sm pointer-events-auto transition-all ${isSidebarOpen && window.innerWidth < 640 ? 'top-1/2 -translate-y-1/2' : 'top-24 sm:top-36'}`}>
-          <div className="glass-panel p-4 sm:p-6 shadow-2xl rounded-2xl border-l-4 border-l-red-500 transition-all">
+        <div className={`absolute right-4 sm:right-6 z-30 w-[280px] sm:max-w-[320px] pointer-events-auto transition-all ${isSidebarOpen && windowWidth < 640 ? 'top-1/2 -translate-y-1/2' : 'top-24 sm:top-24'}`}>
+          <div className="glass-panel p-4 sm:p-4 shadow-2xl rounded-2xl border-l-4 border-l-red-500 transition-all max-h-[50vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                 <Info size={14} className="text-red-500" />

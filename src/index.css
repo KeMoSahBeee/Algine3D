@@ -76,6 +76,16 @@ body {
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+@media (max-width: 640px) {
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px);
+  }
+  .dark .glass-panel {
+    background-color: rgba(10, 10, 10, 0.98) !important;
+  }
+}
+
 .tactical-border {
   position: relative;
 }

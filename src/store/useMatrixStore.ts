@@ -81,8 +81,8 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
   currentCalculation: null,
   history: [],
   isSidebarOpen: true,
-  isKeyboardOpen: true,
-  isResultVisible: true,
+  isKeyboardOpen: false,
+  isResultVisible: false,
   labHeight: 380,
   sidebarWidth: 380,
   rotationAngle: 0,
@@ -136,8 +136,22 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
     }));
   },
 
-  toggleKeyboard: () => set((state) => ({ isKeyboardOpen: !state.isKeyboardOpen })),
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  toggleKeyboard: () => set((state) => {
+    const isMobile = window.innerWidth < 640;
+    const nextValue = !state.isKeyboardOpen;
+    return { 
+      isKeyboardOpen: nextValue,
+      ...(isMobile && nextValue ? { isSidebarOpen: false, isResultVisible: false } : {})
+    };
+  }),
+  toggleSidebar: () => set((state) => {
+    const isMobile = window.innerWidth < 640;
+    const nextValue = !state.isSidebarOpen;
+    return { 
+      isSidebarOpen: nextValue,
+      ...(isMobile && nextValue ? { isKeyboardOpen: false, isResultVisible: false } : {})
+    };
+  }),
   toggleTheme: () => set((state) => {
     const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
     if (nextTheme === 'dark') {
@@ -147,13 +161,25 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
     }
     return { theme: nextTheme };
   }),
-  toggleResultVisibility: () => set((state) => ({ isResultVisible: !state.isResultVisible })),
-  setLabHeight: (height) => set(state => ({ 
-    labHeight: Math.max(state.rowsC === 5 ? 420 : 320, Math.min(height, window.innerHeight * 0.9)) 
-  })),
-  setSidebarWidth: (width) => set(state => ({ 
-    sidebarWidth: Math.max(Math.max(state.colsA, state.colsB) === 5 ? 420 : 340, Math.min(width, window.innerWidth * 0.6)) 
-  })),
+  toggleResultVisibility: () => set((state) => {
+    const isMobile = window.innerWidth < 640;
+    const nextValue = !state.isResultVisible;
+    return { 
+      isResultVisible: nextValue,
+      ...(isMobile && nextValue ? { isSidebarOpen: false, isKeyboardOpen: false } : {})
+    };
+  }),
+  setLabHeight: (height) => set(state => {
+    const minH = state.rowsC === 5 ? 420 : 320;
+    const maxH = window.innerHeight * 0.9;
+    return { labHeight: Math.max(Math.min(minH, maxH), Math.min(height, maxH)) };
+  }),
+  setSidebarWidth: (width) => set(state => {
+    const isMobile = window.innerWidth < 640;
+    const minW = Math.max(state.colsA, state.colsB) === 5 ? 420 : 340;
+    const maxW = isMobile ? window.innerWidth * 0.95 : window.innerWidth * 0.6;
+    return { sidebarWidth: Math.max(Math.min(minW, maxW), Math.min(width, maxW)) };
+  }),
   setRotationAngle: (angle) => set((state) => ({ 
     rotationAngle: typeof angle === 'function' ? angle(state.rotationAngle) : angle 
   })),
@@ -358,6 +384,12 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
 
         state.currentCalculation = { operation: label, result };
         state.isResultVisible = true; // Auto-show result on calculation
+
+        const isMobile = window.innerWidth < 640;
+        if (isMobile) {
+          state.isSidebarOpen = false;
+          state.isKeyboardOpen = false;
+        }
         
         if (math.isMatrix(result) || Array.isArray(result)) {
           const resArray = math.isMatrix(result) ? result.toArray() : (result as unknown[]);
@@ -393,6 +425,12 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
         state.gridC = resArray.flat().map((v: unknown) => typeof v === 'number' ? Number(v.toFixed(4)) : v) as (number | string)[];
         state.currentCalculation = { operation: item.operation, result: item.result };
         state.isResultVisible = true;
+
+        const isMobile = window.innerWidth < 640;
+        if (isMobile) {
+          state.isSidebarOpen = false;
+          state.isKeyboardOpen = false;
+        }
       }
     }));
   },

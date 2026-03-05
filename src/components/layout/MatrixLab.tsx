@@ -72,11 +72,11 @@ export const MatrixLab = () => {
         <div className="flex flex-wrap gap-4 max-w-full mx-auto min-h-full items-start">
           
           {/* UNARY FUNCTIONS */}
-          <div className="flex flex-col gap-4 flex-grow min-w-[400px]">
+          <div className="flex flex-col gap-4 flex-grow min-w-full sm:min-w-[400px]">
             <div className="flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-secondary)]">Unary Functions</span>
             </div>
-            <div className="grid grid-cols-3 gap-4 h-full">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 h-full">
               {[
                 { label: 'Matrix A', accent: 'border-red-500', ops: ['det_A', 'inv_A', 'trans_A', 'rank_A', 'trace_A', 'rref_A'] },
                 { label: 'Matrix B', accent: 'border-blue-500', ops: ['det_B', 'inv_B', 'trans_B', 'rank_B', 'trace_B', 'rref_B'] },
@@ -97,11 +97,11 @@ export const MatrixLab = () => {
           </div>
 
           {/* ARITHMETIC FUNCTIONS */}
-          <div className="flex flex-col gap-4 flex-grow min-w-[300px]">
+          <div className="flex flex-col gap-4 flex-grow min-w-full sm:min-w-[300px]">
             <div className="flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-secondary)]">Binary Arithmetic</span>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4">
               {[
                 { label: 'A & B', ops: [{ op: 'add_AB', l: '+' }, { op: 'sub_AB', l: '-' }, { op: 'mul_AB', l: 'A×B' }, { op: 'mul_BA', l: 'B×A' }] },
                 { label: 'B & C', ops: [{ op: 'add_BC', l: '+' }, { op: 'sub_BC', l: '-' }, { op: 'mul_BC', l: 'B×C' }, { op: 'mul_CB', l: 'C×B' }] },
@@ -120,7 +120,7 @@ export const MatrixLab = () => {
           </div>
 
           {/* MATRIX C (RESULT) */}
-          <div className="flex flex-col gap-4 min-w-[440px]">
+          <div className="flex flex-col gap-4 min-w-full sm:min-w-[440px]">
             <div className="flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-secondary)]">Result Storage C</span>
             </div>
@@ -130,7 +130,7 @@ export const MatrixLab = () => {
           </div>
 
           {/* MASTER CONTROL - Modern Tactical Version */}
-          <div className="flex flex-col gap-4 min-w-[160px]">
+          <div className="flex flex-col gap-4 min-w-full sm:min-w-[160px]">
             <div className="flex items-center gap-2 border-b border-transparent pb-2">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-transparent select-none">Spacer</span>
             </div>
