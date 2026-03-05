@@ -14,16 +14,16 @@ To provide an intuitive, visual, and powerful interface for performing complex m
 ## Requirements
 
 ### Validated
-(None yet - starting from scratch)
+- [x] **UI-01:** Matrix-style input grid with dynamic bracket visualization.
+- [x] **UI-02:** Key handling (Space/Enter) for efficient matrix data entry.
+- [x] **CALC-01:** Full suite of matrix operations (determinant, inverse, multiplication, etc.) via Math.js.
+- [x] **VIZ-01:** 3D vector visualization with Three.js (axes, labels, colors).
+- [x] **VIZ-02:** Orbit controls for free camera movement (similar to Geogebra).
+- [x] **VIZ-03:** 4D+ matrix visualization using projections or slicing.
+- [x] **HIST-01:** Storage of the last 10 calculations in session history.
 
 ### Active
-- [ ] **UI-01:** Matrix-style input grid with dynamic bracket visualization.
-- [ ] **UI-02:** Key handling (Space/Enter) for efficient matrix data entry.
-- [ ] **CALC-01:** Full suite of matrix operations (determinant, inverse, multiplication, etc.) via Math.js.
-- [ ] **VIZ-01:** 3D vector visualization with Three.js (axes, labels, colors).
-- [ ] **VIZ-02:** Orbit controls for free camera movement (similar to Geogebra).
-- [ ] **VIZ-03:** 4D+ matrix visualization using projections or slicing.
-- [ ] **HIST-01:** Storage of the last 10 calculations in session history.
+(None - Phase 1-6 complete)
 
 ### Out of Scope
 - **Exporting:** No export (PNG/PDF/Data) in v1.
@@ -32,10 +32,10 @@ To provide an intuitive, visual, and powerful interface for performing complex m
 ## Key Decisions
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| React (TypeScript) | User preference for modern, type-safe UI development. | — Pending |
-| Three.js | Required for high-quality 3D rendering and Geogebra-like interaction. | — Pending |
-| Math.js | Comprehensive library for all matrix calculations. | — Pending |
-| 4D+ Projection | Support for higher-dimensional data through 3D visualization techniques. | — Pending |
+| React (TypeScript) | User preference for modern, type-safe UI development. | Implemented |
+| Three.js | Required for high-quality 3D rendering and Geogebra-like interaction. | Implemented |
+| Math.js | Comprehensive library for all matrix calculations. | Implemented |
+| 4D+ Projection | Support for higher-dimensional data through 3D visualization techniques. | Implemented (W-divide) |
 
 ---
-*Last updated: March 3, 2026 after initialization*
+*Last updated: March 5, 2026 after Phase 1-6 completion*

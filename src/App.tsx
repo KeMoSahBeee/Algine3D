@@ -1,132 +1,175 @@
-import React, { CSSProperties } from 'react'
+import React from 'react'
 import { TopBar } from './components/layout/TopBar'
 import { AlgebraSidebar } from './components/layout/AlgebraSidebar'
 import { MatrixLab } from './components/layout/MatrixLab'
 import { VisualizationCanvas } from './components/visualization/VisualizationCanvas'
 import { useMatrixStore } from './store/useMatrixStore'
 import * as math from 'mathjs' 
-import { Info, ChevronDown, RotateCcw } from 'lucide-react'
+import { Info, ChevronDown, RotateCcw, ChevronLeft, ChevronRight, MonitorPlay, X, LayoutPanelTop } from 'lucide-react'
 
 function App() {
   const isKeyboardOpen = useMatrixStore(state => state.isKeyboardOpen)
+  const isSidebarOpen = useMatrixStore(state => state.isSidebarOpen)
+  const isResultVisible = useMatrixStore(state => state.isResultVisible)
   const toggleKeyboard = useMatrixStore(state => state.toggleKeyboard)
+  const toggleSidebar = useMatrixStore(state => state.toggleSidebar)
+  const toggleResultVisibility = useMatrixStore(state => state.toggleResultVisibility)
   const labHeight = useMatrixStore(state => state.labHeight)
+  const sidebarWidth = useMatrixStore(state => state.sidebarWidth)
   const currentCalculation = useMatrixStore((state) => state.currentCalculation)
 
-  const appShellStyle: CSSProperties = {
-    display: 'grid',
-    height: '100vh',
-    width: '100vw',
-    gridTemplateAreas: `
-      "topbar topbar"
-      "sidebar main"
-      "sidebar keyboard"
-    `,
-    gridTemplateRows: `56px 1fr ${isKeyboardOpen ? `${labHeight}px` : '0px'}`,
-    gridTemplateColumns: '320px 1fr',
-    backgroundColor: '#0f0f0f',
-    overflow: 'hidden'
-  };
-
   return (
-    <div style={appShellStyle}>
+    <div className="h-screen w-screen bg-[var(--bg-main)] overflow-hidden font-sans relative transition-colors duration-300">
       
-      <div style={{ gridArea: 'topbar' }}>
-        <TopBar />
+      {/* 1. LAYER: 3D Visualization (Always Fullscreen Background) */}
+      <div className="absolute inset-0 z-0">
+        <VisualizationCanvas />
       </div>
 
-      <div style={{ gridArea: 'sidebar' }} className="overflow-hidden border-r border-[#2a2a2a] bg-[#121212]">
-        <AlgebraSidebar />
-      </div>
-
-      <main style={{ gridArea: 'main' }} className="relative bg-[#0f0f0f] overflow-hidden border-b border-[#2a2a2a]">
-        <div className="w-full h-full">
-          <VisualizationCanvas />
+      {/* 2. LAYER: UI Elements (Overlays) */}
+      
+      {/* TOPBAR: Glassmorphism Floating Style */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] w-[96%] max-w-7xl">
+        <div className="glass-panel px-4 sm:px-6 h-14 flex items-center justify-between rounded-xl shadow-2xl border border-[var(--border-color)]">
+          <TopBar />
         </div>
+      </div>
 
-        {!isKeyboardOpen && (
-          <div className="absolute bottom-6 right-6 z-50">
+      {/* SIDEBAR: Tactical Left Panel */}
+      <div 
+        className={`absolute top-24 left-4 bottom-10 z-40 transition-[transform,opacity] duration-500 ease-out flex gap-2 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+20px)]'
+        }`}
+        style={{ width: `min(${sidebarWidth}px, 85vw)` }}
+      >
+        <div className="flex-1 glass-panel rounded-2xl shadow-2xl border border-[var(--border-color)] overflow-hidden flex flex-col relative">
+          <AlgebraSidebar />
+          
+          {/* Internal Toggle Button (Visual only when open) */}
+          {isSidebarOpen && (
             <button 
-              onClick={toggleKeyboard}
-              className="bg-[#181818] border border-[#333] px-10 h-16 flex items-center justify-center gap-4 shadow-2xl hover:bg-[#222] transition-all active:scale-95 text-white rounded-md font-black uppercase tracking-[0.4em] text-xs border-b-4 border-b-gray-800"
+              onClick={toggleSidebar}
+              className="absolute top-4 right-4 p-2 hover:bg-[var(--button-bg-hover)] rounded-lg text-[var(--text-secondary)] hover:text-red-500 transition-colors"
             >
-              KEYBOARD ON
-              <ChevronDown size={20} className="rotate-180" />
+              <ChevronLeft size={20} />
             </button>
-          </div>
-        )}
-
-        <div className="absolute top-4 left-4 z-10 pointer-events-none">
-          <div style={{ color: '#ffffff', opacity: 1 }} className="bg-[#121212]/80 border border-[#2a2a2a] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] backdrop-blur-sm">
-            Cartesian_Space_Engine
-          </div>
+          )}
         </div>
+      </div>
 
-        {currentCalculation && (
-          <div className="absolute bottom-6 left-6 z-10 max-w-lg pointer-events-auto group">
-            <div className="bg-[#121212] border border-[#2a2a2a] p-6 shadow-2xl border-l-4 border-l-red-600 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2 text-[#71717a]">
-                  <Info size={14} className="text-red-500" />
-                  <span style={{ color: '#ffffff', opacity: 1 }} className="text-[10px] font-black uppercase tracking-widest text-[#ffffff]">
-                    System_Result: {currentCalculation.operation}
-                  </span>
-                </div>
+      {/* COCKPIT: Bottom Tactical Console */}
+      <div 
+        className={`absolute bottom-4 z-50 transition-[transform,opacity,left] duration-500 ease-out ${
+          isKeyboardOpen ? 'translate-y-0 opacity-100' : 'translate-y-[calc(100%+20px)] opacity-0'
+        }`}
+        style={{ 
+          height: `${labHeight}px`,
+          left: isSidebarOpen ? (window.innerWidth < 640 ? '16px' : `${sidebarWidth + 32}px`) : '16px',
+          right: '16px'
+        }}
+      >
+        <div className="glass-panel w-full h-full rounded-2xl shadow-2xl border border-[var(--border-color)] overflow-hidden">
+          <MatrixLab />
+        </div>
+      </div>
+
+      {/* RE-OPEN BUTTONS (Floating & Minimal) */}
+      {!isSidebarOpen && (
+        <div className="absolute top-24 left-6 z-50 sm:top-28">
+          <button 
+            onClick={toggleSidebar}
+            className="group glass-panel w-12 h-12 sm:w-14 sm:h-32 flex flex-col items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+          >
+            <ChevronRight size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:block [writing-mode:vertical-lr] text-[9px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Sidebar On</span>
+          </button>
+        </div>
+      )}
+
+      {!isKeyboardOpen && (
+        <div className="absolute bottom-6 left-6 sm:left-auto sm:right-6 z-50">
+          <button 
+            onClick={toggleKeyboard}
+            className="group glass-panel w-12 h-12 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+          >
+            <MonitorPlay size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Cockpit On</span>
+            <ChevronDown size={18} className="hidden sm:block rotate-180 text-[var(--text-secondary)] opacity-50" />
+          </button>
+        </div>
+      )}
+
+      {/* RESULT OVERLAY TOGGLE (When Hidden) */}
+      {!isResultVisible && currentCalculation && (
+        <div className={`absolute right-6 z-50 transition-all ${isSidebarOpen && window.innerWidth < 640 ? 'top-[4.5rem]' : 'top-24 sm:top-36'}`}>
+          <button 
+            onClick={toggleResultVisibility}
+            className="group glass-panel w-12 h-12 sm:w-auto sm:px-6 sm:h-12 flex items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+          >
+            <LayoutPanelTop size={18} className="text-red-500 group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60 uppercase">Show Result</span>
+          </button>
+        </div>
+      )}
+
+
+
+      {/* RESULT OVERLAY (Floating HUD) */}
+      {currentCalculation && isResultVisible && (
+        <div className={`absolute right-4 sm:right-6 z-30 w-[calc(100vw-32px)] sm:max-w-sm pointer-events-auto transition-all ${isSidebarOpen && window.innerWidth < 640 ? 'top-1/2 -translate-y-1/2' : 'top-24 sm:top-36'}`}>
+          <div className="glass-panel p-4 sm:p-6 shadow-2xl rounded-2xl border-l-4 border-l-red-500 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                <Info size={14} className="text-red-500" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)]">
+                  Analysis Result: {currentCalculation.operation?.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
                 <button 
                   onClick={() => useMatrixStore.getState().undo()}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-all"
+                  className="p-1.5 hover:bg-[var(--button-bg-hover)] rounded-lg transition-all"
                   title="Undo last change"
                 >
-                  <RotateCcw size={12} className="text-white/40" />
+                  <RotateCcw size={12} className="text-[var(--text-secondary)]" />
+                </button>
+                <button 
+                  onClick={toggleResultVisibility}
+                  className="p-1.5 hover:bg-red-500/20 rounded-lg transition-all text-[var(--text-secondary)] hover:text-red-500"
+                  title="Close Result HUD"
+                >
+                  <X size={14} />
                 </button>
               </div>
-              
-              <div style={{ color: '#ffffff', opacity: 1 }} className="text-3xl font-black tracking-tighter font-mono leading-tight">
-                {(() => {
-                  const res = currentCalculation.result;
-                  if (typeof res === 'number') return res.toLocaleString(undefined, { maximumFractionDigits: 6 });
-                  if (typeof res === 'string') return res;
-                  
-                  if (math.isMatrix(res)) {
-                    const size = res.size();
-                    return (
-                      <div className="space-y-2">
-                        <div className="text-[10px] text-gray-500 mb-1">Matrix [{size.join('x')}] Output:</div>
-                        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${size[1]}, minmax(0, 1fr))` }}>
-                          {(res.toArray() as number[][]).flat().map((v, i) => (
-                            <div key={i} className="bg-white/5 border border-white/10 p-2 text-center text-sm rounded">
-                              {typeof v === 'number' ? v.toFixed(3) : String(v)}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  if (Array.isArray(res)) {
-                    return (
-                      <div className="flex flex-wrap gap-2">
-                        {res.map((v, i) => (
-                          <div key={i} className="bg-red-600/10 border border-red-600/20 px-3 py-1 rounded text-lg">
-                            {typeof v === 'number' ? v.toFixed(4) : v.toString()}
+            </div>
+            
+            <div className="text-xl sm:text-2xl font-black tracking-tighter font-mono leading-tight text-[var(--text-primary)]">
+              {(() => {
+                const res = currentCalculation.result;
+                if (typeof res === 'number') return res.toLocaleString(undefined, { maximumFractionDigits: 4 });
+                if (typeof res === 'string') return res;
+                
+                if (math.isMatrix(res)) {
+                  const size = res.size();
+                  return (
+                    <div className="space-y-3">
+                      <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest">Output Matrix [{size.join('x')}]</div>
+                      <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${size[1]}, minmax(0, 1fr))` }}>
+                        {(res.toArray() as number[][]).flat().map((v, i) => (
+                          <div key={i} className="bg-[var(--button-bg)] border border-[var(--border-color)] p-2 text-center text-xs font-mono rounded-lg text-[var(--text-primary)]">
+                            {typeof v === 'number' ? Number(v.toFixed(2)) : String(v)}
                           </div>
                         ))}
                       </div>
-                    );
-                  }
-
-                  return String(res);
-                })()}
-              </div>
+                    </div>
+                  );
+                }
+                return String(res);
+              })()}
             </div>
           </div>
-        )}
-      </main>
-
-      <div style={{ gridArea: 'keyboard' }} className="overflow-hidden border-t border-[#2a2a2a] bg-[#121212]">
-        <MatrixLab />
-      </div>
-
+        </div>
+      )}
     </div>
   )
 }

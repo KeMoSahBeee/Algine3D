@@ -59,11 +59,12 @@ export const MatrixCell = ({ matrix, index }: Props) => {
       onKeyDown={handleKeyDown}
       data-matrix={matrix}
       data-index={index}
-      style={{ color: '#000000', opacity: 1 }}
       className={cn(
-        "w-[72px] h-[72px] bg-white border border-gray-200 text-center text-[18px] font-black font-mono transition-all shadow-sm",
-        "focus:bg-[#f9f9f9] focus:text-[#000000] focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black/20 rounded-sm",
-        "placeholder:text-gray-300"
+        "w-12 h-12 bg-[var(--button-bg)] border border-[var(--border-color)] text-center text-[14px] font-black font-mono transition-all",
+        "focus:bg-[var(--button-bg-hover)] focus:text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 rounded-lg",
+        "placeholder:text-[var(--text-secondary)] text-[var(--text-primary)]",
+        "opacity-100 dark:opacity-90", // Solid in light, slightly soft in dark
+        matrix === 'C' && "pointer-events-none opacity-60"
       )}
       placeholder="0"
     />

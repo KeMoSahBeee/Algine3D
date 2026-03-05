@@ -1,10 +1,9 @@
 import React, { useRef, useEffect } from 'react'
 import { useMatrixStore, MatrixOperation } from '@/store/useMatrixStore'
-import { ChevronDown, Trash2, Plus, Minus } from 'lucide-react'
+import { ChevronDown, Power, Zap } from 'lucide-react'
 import { MatrixGrid } from '../matrix/MatrixGrid'
 
 export const MatrixLab = () => {
-  const labHeight = useMatrixStore(state => state.labHeight);
   const toggleKeyboard = useMatrixStore(state => state.toggleKeyboard);
   const setLabHeight = useMatrixStore(state => state.setLabHeight);
   const resetGrids = useMatrixStore(state => state.resetGrids);
@@ -20,15 +19,12 @@ export const MatrixLab = () => {
     };
 
     const stopResizing = () => {
-      if (isResizing.current) {
-        isResizing.current = false;
-        document.body.style.cursor = 'default';
-      }
+      isResizing.current = false;
+      document.body.style.cursor = 'default';
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', stopResizing);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', stopResizing);
@@ -41,167 +37,117 @@ export const MatrixLab = () => {
     document.body.style.cursor = 'row-resize';
   };
 
-  const whiteStyle = { color: '#ffffff', opacity: 1, fontWeight: '900', textTransform: 'uppercase' as const };
-  const labelStyle = { ...whiteStyle, fontSize: '14px', letterSpacing: '0.1em' };
   const OpButton = ({ op, label, icon: Icon, className }: { op: MatrixOperation, label: string, icon?: React.ComponentType<{ className?: string }>, className?: string }) => (
     <button 
       onClick={() => executeOperation(op)}
-      className={`bg-[#450a0a] border border-[#7f1d1d] h-[56px] flex flex-col items-center justify-center gap-1 transition-all active:bg-[#7f1d1d] active:scale-[0.97] hover:bg-[#7f1d1d] rounded-md shadow-lg group ${className}`}
-      style={{ color: '#ffffff' }}
+      className={`group relative overflow-hidden bg-[var(--button-bg)] border border-[var(--border-color)] h-[52px] flex flex-col items-center justify-center gap-1 transition-all active:scale-95 hover:bg-[var(--button-bg-hover)] rounded-xl ${className}`}
     >
-      {Icon && <Icon className="w-5 h-5 text-red-300 group-hover:text-white transition-colors" />}
-      <span className="text-[18px] font-black uppercase tracking-tight">{label}</span>
+      <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      {Icon && <Icon className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-red-500 transition-colors" />}
+      <span className="text-[14px] font-black uppercase tracking-tight text-[var(--text-primary)] opacity-80 group-hover:opacity-100 transition-colors">{label}</span>
     </button>
   )
 
   return (
-    <footer 
-      className="bg-[#121212] border-t-2 border-[#2a2a2a] flex flex-col z-40 w-full shadow-[0_-15px_30px_rgba(0,0,0,0.5)] relative"
-      style={{ height: `${labHeight}px` }}
-    >
-      {/* Resize Handle Container */}
+    <footer className="w-full h-full flex flex-col bg-transparent select-none relative">
+      
+      {/* HEADER / DRAG HANDLE */}
       <div 
         onMouseDown={startResizing}
-        className="h-12 flex items-center justify-between px-6 border-b border-[#2a2a2a] bg-[#0f0f0f] cursor-row-resize select-none active:bg-[#1a1a1a] transition-colors"
+        className="h-12 flex items-center justify-between px-8 border-b border-[var(--border-color)] bg-[var(--button-bg)] cursor-row-resize active:bg-[var(--button-bg-hover)] transition-colors"
       >
-        <div className="flex items-center gap-4 pointer-events-none">
-          <span style={{ ...labelStyle, fontSize: '11px', letterSpacing: '0.4em' }}>MATRIX OPERATIONS COCKPIT</span>
+        <div className="flex items-center gap-3">
+          <Zap size={14} className="text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--text-primary)] opacity-80">Command Cockpit</span>
         </div>
         <button 
-          onClick={(e) => {
-            e.stopPropagation(); // Don't trigger resize when clicking toggle
-            toggleKeyboard();
-          }} 
-          className="p-2 hover:bg-red-600/20 rounded-md cursor-pointer pointer-events-auto transition-colors group"
+          onClick={toggleKeyboard} 
+          className="p-2 hover:bg-[var(--button-bg-hover)] rounded-lg text-[var(--text-secondary)] hover:text-red-500 transition-colors"
         >
-          <ChevronDown size={22} className="text-red-500 group-hover:text-red-400 transition-colors" />
+          <ChevronDown size={20} />
         </button>
       </div>
 
-      <div className="flex-1 p-[20px] overflow-y-auto">
-        <div className="flex flex-row gap-12 max-w-[1500px] mx-auto">
+      <div className="flex-1 p-4 overflow-auto custom-scrollbar">
+        <div className="flex flex-wrap gap-4 max-w-full mx-auto min-h-full items-start">
           
-          {/* Unary Controls */}
-          <div className="flex flex-col gap-6 flex-[1.8]">
-            <div className="border-b border-white/10 pb-2">
-              <span className="text-[12px] text-[#ffffff] font-black uppercase tracking-[0.3em] opacity-100">UNARY MATRIX FUNCTIONS</span>
+          {/* UNARY FUNCTIONS */}
+          <div className="flex flex-col gap-4 flex-grow min-w-[400px]">
+            <div className="flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-secondary)]">Unary Functions</span>
             </div>
-            <div className="grid grid-cols-3 gap-8">
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#ffffff] font-black uppercase tracking-widest border-l-2 border-red-500 pl-2 opacity-100">Matrix A</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <OpButton op="det_A" label="DET" />
-                  <OpButton op="inv_A" label="INV" />
-                  <OpButton op="trans_A" label="TRANS" />
-                  <OpButton op="rank_A" label="RANK" />
-                  <OpButton op="trace_A" label="TRACE" />
-                  <OpButton op="rref_A" label="RREF" />
+            <div className="grid grid-cols-3 gap-4 h-full">
+              {[
+                { label: 'Matrix A', accent: 'border-red-500', ops: ['det_A', 'inv_A', 'trans_A', 'rank_A', 'trace_A', 'rref_A'] },
+                { label: 'Matrix B', accent: 'border-blue-500', ops: ['det_B', 'inv_B', 'trans_B', 'rank_B', 'trace_B', 'rref_B'] },
+                { label: 'Matrix C', accent: 'border-purple-500', ops: ['det_C', 'inv_C', 'trans_C', 'rank_C', 'trace_C', 'rref_C'] }
+              ].map((group) => (
+                <div key={group.label} className="space-y-3">
+                  <span className={`text-[8px] font-black uppercase tracking-widest text-[var(--text-primary)] opacity-30 border-l-2 ${group.accent} pl-2 ml-1`}>
+                    {group.label}
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {group.ops.map(op => (
+                      <OpButton key={op} op={op as MatrixOperation} label={op.split('_')[0].toUpperCase()} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#ffffff] font-black uppercase tracking-widest border-l-2 border-blue-500 pl-2 opacity-100">Matrix B</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <OpButton op="det_B" label="DET" />
-                  <OpButton op="inv_B" label="INV" />
-                  <OpButton op="trans_B" label="TRANS" />
-                  <OpButton op="rank_B" label="RANK" />
-                  <OpButton op="trace_B" label="TRACE" />
-                  <OpButton op="rref_B" label="RREF" />
-                </div>
-              </div>
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#ffffff] font-black uppercase tracking-widest border-l-2 border-purple-500 pl-2 opacity-100">Matrix C</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <OpButton op="det_C" label="DET" />
-                  <OpButton op="inv_C" label="INV" />
-                  <OpButton op="trans_C" label="TRANS" />
-                  <OpButton op="rank_C" label="RANK" />
-                  <OpButton op="trace_C" label="TRACE" />
-                  <OpButton op="rref_C" label="RREF" />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Arithmetic Controls */}
-          <div className="flex flex-col gap-6 flex-[1.5]">
-            <div className="border-b border-white/10 pb-2">
-              <span className="text-[12px] text-[#ffffff] font-black uppercase tracking-[0.3em] opacity-100">BINARY MATRIX ARITHMETIC</span>
+          {/* ARITHMETIC FUNCTIONS */}
+          <div className="flex flex-col gap-4 flex-grow min-w-[300px]">
+            <div className="flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-secondary)]">Binary Arithmetic</span>
             </div>
-            <div className="grid grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#ffffff] font-black uppercase tracking-widest opacity-100">A & B</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <OpButton op="add_AB" label="+" icon={Plus} className="bg-red-900/40" />
-                  <OpButton op="sub_AB" label="-" icon={Minus} className="bg-red-900/40" />
-                  <OpButton op="mul_AB" label="A×B" className="bg-red-900/40" />
-                  <OpButton op="mul_BA" label="B×A" className="bg-red-900/40" />
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'A & B', ops: [{ op: 'add_AB', l: '+' }, { op: 'sub_AB', l: '-' }, { op: 'mul_AB', l: 'A×B' }, { op: 'mul_BA', l: 'B×A' }] },
+                { label: 'B & C', ops: [{ op: 'add_BC', l: '+' }, { op: 'sub_BC', l: '-' }, { op: 'mul_BC', l: 'B×C' }, { op: 'mul_CB', l: 'C×B' }] },
+                { label: 'A & C', ops: [{ op: 'add_AC', l: '+' }, { op: 'sub_AC', l: '-' }, { op: 'mul_AC', l: 'A×C' }, { op: 'mul_CA', l: 'C×A' }] }
+              ].map((group) => (
+                <div key={group.label} className="space-y-3">
+                  <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-primary)] opacity-30 ml-1">{group.label}</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {group.ops.map(o => (
+                      <OpButton key={o.op} op={o.op as MatrixOperation} label={o.l} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#ffffff] font-black uppercase tracking-widest opacity-100">B & C</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <OpButton op="add_BC" label="+" icon={Plus} className="bg-blue-900/40" />
-                  <OpButton op="sub_BC" label="-" icon={Minus} className="bg-blue-900/40" />
-                  <OpButton op="mul_BC" label="B×C" className="bg-blue-900/40" />
-                  <OpButton op="mul_CB" label="C×B" className="bg-blue-900/40" />
-                </div>
-              </div>
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#ffffff] font-black uppercase tracking-widest opacity-100">A & C</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <OpButton op="add_AC" label="+" icon={Plus} className="bg-purple-900/40" />
-                  <OpButton op="sub_AC" label="-" icon={Minus} className="bg-purple-900/40" />
-                  <OpButton op="mul_AC" label="A×C" className="bg-purple-900/40" />
-                  <OpButton op="mul_CA" label="C×A" className="bg-purple-900/40" />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Matrix C Display */}
-          <div className="flex flex-col gap-6 min-w-[200px]">
-            <div className="border-b border-white/10 pb-2">
-              <span className="text-[12px] text-[#ffffff] font-black uppercase tracking-[0.3em] opacity-100">MATRIX C (RESULT)</span>
+          {/* MATRIX C (RESULT) */}
+          <div className="flex flex-col gap-4 min-w-[440px]">
+            <div className="flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-secondary)]">Result Storage C</span>
             </div>
-            <div className="bg-[#0f0f0f] border-2 border-[#2a2a2a] p-8 flex justify-center rounded-md shadow-inner">
+            <div className="bg-[var(--grid-bg)] border border-[var(--border-color)] p-4 flex justify-center rounded-xl shadow-inner overflow-auto">
               <MatrixGrid matrix="C" />
             </div>
           </div>
 
-          {/* System Control - Industrial Warning Sign Redesign */}
-          <div className="flex flex-col gap-6 min-w-[180px]">
-            <div className="border-b border-yellow-600/30 pb-2">
-              <span className="text-[11px] text-yellow-500/70 font-black uppercase tracking-[0.3em]">System Safety</span>
+          {/* MASTER CONTROL - Modern Tactical Version */}
+          <div className="flex flex-col gap-4 min-w-[160px]">
+            <div className="flex items-center gap-2 border-b border-transparent pb-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-transparent select-none">Spacer</span>
             </div>
             <button 
               onClick={resetGrids}
-              className="bg-[#facc15] border-[3px] border-black flex-1 flex flex-col rounded-sm shadow-[6px_6px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] group relative overflow-hidden"
+              className="group relative flex-1 bg-[var(--button-bg)] border border-[var(--border-color)] rounded-2xl overflow-hidden transition-all hover:bg-red-500/10 active:scale-[0.98] border-b-4 border-b-[var(--border-color)] active:border-b-0 active:translate-y-1"
             >
-              {/* Top Hazard Strip Header */}
-              <div className="w-full h-[18px] bg-[repeating-linear-gradient(45deg,#000,#000_15px,#facc15_15px,#facc15_30px)] border-b-[3px] border-black"></div>
-              
-              <div className="flex-1 flex flex-col items-center justify-center p-4 gap-2">
-                {/* Warning Triangle Icon Container */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-black scale-110 blur-[1px] opacity-20"></div>
-                  <Trash2 className="w-10 h-10 text-black relative z-10" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="flex flex-col items-center justify-center p-6 gap-4">
+                <div className="p-4 rounded-full bg-[var(--button-bg)] group-hover:bg-red-500/20 transition-all">
+                  <Power className="w-8 h-8 text-[var(--text-secondary)] group-hover:text-red-500 transition-colors" />
                 </div>
-                
                 <div className="flex flex-col items-center">
-                  <span className="text-black text-[18px] font-[900] uppercase leading-none tracking-tighter">Reset All</span>
-                  <span className="text-black/60 text-[8px] font-bold uppercase mt-1 tracking-widest">Clear Workbench</span>
+                  <span className="text-[var(--text-primary)] opacity-80 text-[16px] font-black uppercase tracking-tighter group-hover:opacity-100 transition-colors">Master Clear</span>
+                  <span className="text-[var(--text-secondary)] text-[8px] font-bold uppercase mt-1 tracking-[0.3em]">Reset All Systems</span>
                 </div>
               </div>
-
-              {/* Bottom Hazard Strip */}
-              <div className="w-full h-[18px] bg-[repeating-linear-gradient(45deg,#000,#000_15px,#facc15_15px,#facc15_30px)] border-t-[3px] border-black"></div>
-
-              {/* Bolt/Screw details in corners for industrial look */}
-              <div className="absolute top-[22px] left-1 w-1 h-1 rounded-full bg-black/20"></div>
-              <div className="absolute top-[22px] right-1 w-1 h-1 rounded-full bg-black/20"></div>
-              <div className="absolute bottom-[22px] left-1 w-1 h-1 rounded-full bg-black/20"></div>
-              <div className="absolute bottom-[22px] right-1 w-1 h-1 rounded-full bg-black/20"></div>
             </button>
           </div>
 
@@ -210,4 +156,3 @@ export const MatrixLab = () => {
     </footer>
   )
 }
-

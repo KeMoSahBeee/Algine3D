@@ -44,21 +44,31 @@ interface MatrixState {
   history: HistoryItem[];
   isSidebarOpen: boolean;
   isKeyboardOpen: boolean;
+  isResultVisible: boolean;
   labHeight: number;
+  sidebarWidth: number;
   rotationAngle: number;
+  theme: 'dark' | 'light';
   undoStack: MatrixStateSnapshot[];
   redoStack: MatrixStateSnapshot[];
   
   setDimensions: (matrix: 'A' | 'B', rows: number, cols: number) => void;
   setCellValue: (matrix: 'A' | 'B' | 'C', index: number, value: number | string) => void;
   resetGrids: () => void;
+  resetMatrixA: () => void;
+  resetMatrixB: () => void;
   executeOperation: (op: MatrixOperation) => void;
   toggleKeyboard: () => void;
+  toggleSidebar: () => void;
+  toggleTheme: () => void;
+  toggleResultVisibility: () => void;
   setLabHeight: (height: number) => void;
+  setSidebarWidth: (width: number) => void;
   setRotationAngle: (angle: number | ((prev: number) => number)) => void;
   undo: () => void;
   redo: () => void;
   clearHistory: () => void;
+  restoreHistoryItem: (id: string) => void;
 }
 
 export const useMatrixStore = create<MatrixState>()((set, get) => ({
@@ -72,8 +82,11 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
   history: [],
   isSidebarOpen: true,
   isKeyboardOpen: true,
-  labHeight: 320,
+  isResultVisible: true,
+  labHeight: 380,
+  sidebarWidth: 380,
   rotationAngle: 0,
+  theme: 'dark',
   undoStack: [],
   redoStack: [],
 
@@ -96,6 +109,12 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
       state.colsB = cols;
       state.gridB = Array(rows * cols).fill(0);
     }
+    
+    // Auto-resize sidebar based on cols with strict minimum for 5x5
+    const maxCols = Math.max(state.colsA, state.colsB);
+    state.sidebarWidth = Math.max(state.sidebarWidth, maxCols * 72 + 80);
+    if (maxCols === 5) state.sidebarWidth = Math.max(state.sidebarWidth, 420);
+    
     state.currentCalculation = null;
   })),
 
@@ -118,9 +137,49 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
   },
 
   toggleKeyboard: () => set((state) => ({ isKeyboardOpen: !state.isKeyboardOpen })),
-  setLabHeight: (height) => set({ labHeight: Math.max(120, Math.min(height, window.innerHeight * 0.8)) }),
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  toggleTheme: () => set((state) => {
+    const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    return { theme: nextTheme };
+  }),
+  toggleResultVisibility: () => set((state) => ({ isResultVisible: !state.isResultVisible })),
+  setLabHeight: (height) => set(state => ({ 
+    labHeight: Math.max(state.rowsC === 5 ? 420 : 320, Math.min(height, window.innerHeight * 0.9)) 
+  })),
+  setSidebarWidth: (width) => set(state => ({ 
+    sidebarWidth: Math.max(Math.max(state.colsA, state.colsB) === 5 ? 420 : 340, Math.min(width, window.innerWidth * 0.6)) 
+  })),
   setRotationAngle: (angle) => set((state) => ({ 
     rotationAngle: typeof angle === 'function' ? angle(state.rotationAngle) : angle 
+  })),
+
+  resetMatrixA: () => set(produce((state: MatrixState) => {
+    state.undoStack.push({
+      gridA: [...state.gridA], gridB: [...state.gridB], gridC: [...state.gridC],
+      rowsA: state.rowsA, colsA: state.colsA,
+      rowsB: state.rowsB, colsB: state.colsB,
+      rowsC: state.rowsC, colsC: state.colsC
+    });
+    if (state.undoStack.length > 50) state.undoStack.shift();
+    state.redoStack = [];
+    state.gridA = Array(state.rowsA * state.colsA).fill(0);
+  })),
+
+  resetMatrixB: () => set(produce((state: MatrixState) => {
+    state.undoStack.push({
+      gridA: [...state.gridA], gridB: [...state.gridB], gridC: [...state.gridC],
+      rowsA: state.rowsA, colsA: state.colsA,
+      rowsB: state.rowsB, colsB: state.colsB,
+      rowsC: state.rowsC, colsC: state.colsC
+    });
+    if (state.undoStack.length > 50) state.undoStack.shift();
+    state.redoStack = [];
+    state.gridB = Array(state.rowsB * state.colsB).fill(0);
   })),
 
   resetGrids: () => set(produce((state: MatrixState) => {
@@ -195,7 +254,7 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
 
       const matA = toMathMatrix(gridA, rowsA, colsA);
       const matB = toMathMatrix(gridB, rowsB, colsB);
-      // matC not used in unary ops but available for binary matC logic if needed
+      const matC = toMathMatrix(gridC, rowsC, colsC);
 
       const getRREF = (m: math.Matrix) => {
         const A = m.toArray() as number[][];
@@ -235,6 +294,13 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
         }
         return rank;
       };
+
+      const getEigens = (m: math.Matrix) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { eigenvectors } = math.eigs(m) as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return math.matrix(eigenvectors.map((e: any) => e.vector));
+      };
       
       let result: unknown;
       const label = op.toUpperCase();
@@ -246,6 +312,7 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
         case 'rank_A': result = getRank(matA); break;
         case 'trace_A': if (rowsA !== colsA) throw new Error("A must be square"); result = math.trace(matA); break;
         case 'rref_A': result = getRREF(matA); break;
+        case 'eig_A': if (rowsA !== colsA) throw new Error("A must be square"); result = getEigens(matA); break;
 
         case 'det_B': if (rowsB !== colsB) throw new Error("B must be square"); result = math.det(matB); break;
         case 'inv_B': if (rowsB !== colsB) throw new Error("B must be square"); result = math.inv(matB); break;
@@ -253,36 +320,30 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
         case 'rank_B': result = getRank(matB); break;
         case 'trace_B': if (rowsB !== colsB) throw new Error("B must be square"); result = math.trace(matB); break;
         case 'rref_B': result = getRREF(matB); break;
+        case 'eig_B': if (rowsB !== colsB) throw new Error("B must be square"); result = getEigens(matB); break;
 
-        case 'det_C': {
-          const matC_local = toMathMatrix(gridC, rowsC, colsC);
-          if (rowsC !== colsC) throw new Error("C must be square"); result = math.det(matC_local); break;
-        }
-        case 'inv_C': {
-          const matC_local = toMathMatrix(gridC, rowsC, colsC);
-          if (rowsC !== colsC) throw new Error("C must be square"); result = math.inv(matC_local); break;
-        }
-        case 'trans_C': {
-          const matC_local = toMathMatrix(gridC, rowsC, colsC);
-          result = math.transpose(matC_local); break;
-        }
-        case 'rank_C': {
-          const matC_local = toMathMatrix(gridC, rowsC, colsC);
-          result = getRank(matC_local); break;
-        }
-        case 'trace_C': {
-          const matC_local = toMathMatrix(gridC, rowsC, colsC);
-          if (rowsC !== colsC) throw new Error("C must be square"); result = math.trace(matC_local); break;
-        }
-        case 'rref_C': {
-          const matC_local = toMathMatrix(gridC, rowsC, colsC);
-          result = getRREF(matC_local); break;
-        }
+        case 'det_C': if (rowsC !== colsC) throw new Error("C must be square"); result = math.det(matC); break;
+        case 'inv_C': if (rowsC !== colsC) throw new Error("C must be square"); result = math.inv(matC); break;
+        case 'trans_C': result = math.transpose(matC); break;
+        case 'rank_C': result = getRank(matC); break;
+        case 'trace_C': if (rowsC !== colsC) throw new Error("C must be square"); result = math.trace(matC); break;
+        case 'rref_C': result = getRREF(matC); break;
+        case 'eig_C': if (rowsC !== colsC) throw new Error("C must be square"); result = getEigens(matC); break;
 
         case 'add_AB': if (rowsA !== rowsB || colsA !== colsB) throw new Error("A & B dimensions must match"); result = math.add(matA, matB); break;
         case 'sub_AB': if (rowsA !== rowsB || colsA !== colsB) throw new Error("A & B dimensions must match"); result = math.subtract(matA, matB); break;
         case 'mul_AB': if (colsA !== rowsB) throw new Error("Inner dimensions (A cols & B rows) must match"); result = math.multiply(matA, matB); break;
         case 'mul_BA': if (colsB !== rowsA) throw new Error("Inner dimensions (B cols & A rows) must match"); result = math.multiply(matB, matA); break;
+
+        case 'add_BC': if (rowsB !== rowsC || colsB !== colsC) throw new Error("B & C dimensions must match"); result = math.add(matB, matC); break;
+        case 'sub_BC': if (rowsB !== rowsC || colsB !== colsC) throw new Error("B & C dimensions must match"); result = math.subtract(matB, matC); break;
+        case 'mul_BC': if (colsB !== rowsC) throw new Error("Inner dimensions (B cols & C rows) must match"); result = math.multiply(matB, matC); break;
+        case 'mul_CB': if (colsC !== rowsB) throw new Error("Inner dimensions (C cols & B rows) must match"); result = math.multiply(matC, matB); break;
+
+        case 'add_AC': if (rowsA !== rowsC || colsA !== colsC) throw new Error("A & C dimensions must match"); result = math.add(matA, matC); break;
+        case 'sub_AC': if (rowsA !== rowsC || colsA !== colsC) throw new Error("A & C dimensions must match"); result = math.subtract(matA, matC); break;
+        case 'mul_AC': if (colsA !== rowsC) throw new Error("Inner dimensions (A cols & C rows) must match"); result = math.multiply(matA, matC); break;
+        case 'mul_CA': if (colsC !== rowsA) throw new Error("Inner dimensions (C cols & A rows) must match"); result = math.multiply(matC, matA); break;
 
         default: throw new Error(`Operation ${op} not implemented`);
       }
@@ -296,12 +357,15 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
         state.redoStack = [];
 
         state.currentCalculation = { operation: label, result };
+        state.isResultVisible = true; // Auto-show result on calculation
         
         if (math.isMatrix(result) || Array.isArray(result)) {
           const resArray = math.isMatrix(result) ? result.toArray() : (result as unknown[]);
           state.rowsC = resArray.length;
           state.colsC = Array.isArray(resArray[0]) ? resArray[0].length : 1;
           state.gridC = resArray.flat().map((v: unknown) => typeof v === 'number' ? Number(v.toFixed(4)) : v) as (number | string)[];
+          
+          state.labHeight = Math.max(state.rowsC === 5 ? 420 : 320, state.rowsC * 60 + 120);
         }
 
         state.history.unshift({ id: crypto.randomUUID(), timestamp: Date.now(), operation: label, result });
@@ -315,4 +379,21 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
   },
 
   clearHistory: () => set({ history: [] }),
+
+  restoreHistoryItem: (id) => {
+    const { history } = get();
+    const item = history.find(h => h.id === id);
+    if (!item || !item.result) return;
+
+    set(produce((state: MatrixState) => {
+      if (math.isMatrix(item.result) || Array.isArray(item.result)) {
+        const resArray = math.isMatrix(item.result) ? item.result.toArray() : (item.result as unknown[]);
+        state.rowsC = resArray.length;
+        state.colsC = Array.isArray(resArray[0]) ? resArray[0].length : 1;
+        state.gridC = resArray.flat().map((v: unknown) => typeof v === 'number' ? Number(v.toFixed(4)) : v) as (number | string)[];
+        state.currentCalculation = { operation: item.operation, result: item.result };
+        state.isResultVisible = true;
+      }
+    }));
+  },
 }))
