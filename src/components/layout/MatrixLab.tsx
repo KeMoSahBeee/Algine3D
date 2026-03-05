@@ -10,6 +10,7 @@ export const MatrixLab = () => {
   const executeOperation = useMatrixStore(state => state.executeOperation);
 
   const isResizing = useRef(false);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -37,6 +38,22 @@ export const MatrixLab = () => {
     document.body.style.cursor = 'row-resize';
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchEndY - touchStartY.current;
+    
+    // If swiped down more than 40px, close cockpit
+    if (deltaY > 40) {
+      toggleKeyboard();
+    }
+    touchStartY.current = null;
+  };
+
   const OpButton = ({ op, label, icon: Icon, className }: { op: MatrixOperation, label: string, icon?: React.ComponentType<{ className?: string }>, className?: string }) => (
     <button 
       onClick={() => executeOperation(op)}
@@ -54,15 +71,20 @@ export const MatrixLab = () => {
       {/* HEADER / DRAG HANDLE */}
       <div 
         onMouseDown={startResizing}
-        className="h-12 flex items-center justify-between px-8 border-b border-[var(--border-color)] bg-[var(--button-bg)] cursor-row-resize active:bg-[var(--button-bg-hover)] transition-colors"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="h-12 flex flex-col sm:flex-row items-center justify-center sm:justify-between px-8 border-b border-[var(--border-color)] bg-[var(--button-bg)] cursor-row-resize active:bg-[var(--button-bg-hover)] transition-colors relative"
       >
+        {/* Mobile Swipe Handle Indicator */}
+        <div className="w-10 h-1 bg-[var(--text-secondary)] opacity-20 rounded-full mb-1 sm:hidden"></div>
+        
         <div className="flex items-center gap-3">
           <Zap size={14} className="text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--text-primary)] opacity-80">Command Cockpit</span>
         </div>
         <button 
           onClick={toggleKeyboard} 
-          className="p-2 hover:bg-[var(--button-bg-hover)] rounded-lg text-[var(--text-secondary)] hover:text-red-500 transition-colors"
+          className="absolute right-4 sm:relative sm:right-0 p-2 hover:bg-[var(--button-bg-hover)] rounded-lg text-[var(--text-secondary)] hover:text-red-500 transition-colors"
         >
           <ChevronDown size={20} />
         </button>

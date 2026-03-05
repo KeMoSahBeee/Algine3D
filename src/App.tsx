@@ -9,6 +9,8 @@ import { Info, ChevronDown, RotateCcw, ChevronLeft, ChevronRight, MonitorPlay, X
 
 function App() {
   const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
+  const touchStartY = React.useRef<number | null>(null);
+
   const isKeyboardOpen = useMatrixStore(state => state.isKeyboardOpen)
   const isSidebarOpen = useMatrixStore(state => state.isSidebarOpen)
   const isResultVisible = useMatrixStore(state => state.isResultVisible)
@@ -25,8 +27,24 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchStartY.current - touchEndY;
+    
+    // If swiped up more than 40px, open cockpit
+    if (deltaY > 40 && !isKeyboardOpen) {
+      toggleKeyboard();
+    }
+    touchStartY.current = null;
+  };
+
   return (
-    <div className="h-screen w-screen bg-[var(--bg-main)] overflow-hidden font-sans relative transition-colors duration-300">
+    <div className="h-[100dvh] w-screen bg-[var(--bg-main)] overflow-hidden font-sans relative transition-colors duration-300">
       
       {/* 1. LAYER: 3D Visualization (Always Fullscreen Background) */}
       <div className="absolute inset-0 z-0">
@@ -44,7 +62,7 @@ function App() {
 
       {/* SIDEBAR: Tactical Left Panel */}
       <div 
-        className={`absolute top-24 left-4 bottom-10 z-40 transition-[transform,opacity] duration-500 ease-out flex gap-2 ${
+        className={`absolute top-24 left-4 bottom-20 sm:bottom-10 z-40 transition-[transform,opacity] duration-500 ease-out flex gap-2 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+20px)]'
         }`}
         style={{ width: `min(${sidebarWidth}px, 85vw)` }}
@@ -66,7 +84,7 @@ function App() {
 
       {/* COCKPIT: Bottom Tactical Console */}
       <div 
-        className={`absolute bottom-4 z-50 transition-[transform,opacity,left] duration-500 ease-out ${
+        className={`absolute bottom-10 sm:bottom-4 z-50 transition-[transform,opacity,left] duration-500 ease-out ${
           isKeyboardOpen ? 'translate-y-0 opacity-100' : 'translate-y-[calc(100%+20px)] opacity-0'
         }`}
         style={{ 
@@ -85,9 +103,9 @@ function App() {
         <div className="absolute top-24 left-6 z-50">
           <button 
             onClick={toggleSidebar}
-            className="group glass-panel w-16 h-16 sm:w-14 sm:h-32 flex flex-col items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+            className="group glass-panel w-11 h-11 sm:w-14 sm:h-32 flex flex-col items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
           >
-            <ChevronRight size={24} className="text-red-500 group-hover:scale-110 transition-transform" />
+            <ChevronRight size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
             <span className="hidden sm:block [writing-mode:vertical-lr] text-[9px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Sidebar On</span>
           </button>
         </div>
@@ -97,9 +115,11 @@ function App() {
         <div className="absolute bottom-24 right-6 z-50">
           <button 
             onClick={toggleKeyboard}
-            className="group glass-panel w-16 h-16 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className="group glass-panel w-11 h-11 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
           >
-            <MonitorPlay size={24} className="text-red-500 group-hover:scale-110 transition-transform" />
+            <MonitorPlay size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
             <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Cockpit On</span>
             <ChevronDown size={18} className="hidden sm:block rotate-180 text-[var(--text-secondary)] opacity-50" />
           </button>
@@ -111,9 +131,9 @@ function App() {
         <div className={`absolute right-6 z-50 transition-all ${windowWidth < 640 ? 'top-24' : 'top-24 sm:top-24'}`}>
           <button 
             onClick={toggleResultVisibility}
-            className="group glass-panel w-16 h-16 sm:w-auto sm:px-4 sm:h-10 flex items-center justify-center gap-0 sm:gap-3 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+            className="group glass-panel w-11 h-11 sm:w-auto sm:px-4 sm:h-10 flex items-center justify-center gap-0 sm:gap-3 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
           >
-            <LayoutPanelTop size={24} className="text-red-500 group-hover:scale-110 transition-transform sm:w-4 sm:h-4" />
+            <LayoutPanelTop size={20} className="text-red-500 group-hover:scale-110 transition-transform sm:w-4 sm:h-4" />
             <span className="hidden sm:block text-[9px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60 uppercase">Show Result</span>
           </button>
         </div>

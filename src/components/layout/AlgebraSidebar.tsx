@@ -36,6 +36,24 @@ export const AlgebraSidebar = () => {
       }
     };
 
+    const handleTouchMoveGlobal = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (isResizing.current) {
+        setSidebarWidth(touch.clientX - 16);
+      }
+      if (isDraggingDisk.current && diskRef.current) {
+        const rect = diskRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const currentAngle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX) * (180 / Math.PI);
+        let delta = currentAngle - lastAngle.current;
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+        setDiskRotation((prev) => (prev + delta + 360) % 360);
+        lastAngle.current = currentAngle;
+      }
+    };
+
     const handleMouseUpGlobal = () => {
       isResizing.current = false;
       isDraggingDisk.current = false;
@@ -44,9 +62,14 @@ export const AlgebraSidebar = () => {
 
     window.addEventListener('mousemove', handleMouseMoveGlobal);
     window.addEventListener('mouseup', handleMouseUpGlobal);
+    window.addEventListener('touchmove', handleTouchMoveGlobal, { passive: false });
+    window.addEventListener('touchend', handleMouseUpGlobal);
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMoveGlobal);
       window.removeEventListener('mouseup', handleMouseUpGlobal);
+      window.removeEventListener('touchmove', handleTouchMoveGlobal);
+      window.removeEventListener('touchend', handleMouseUpGlobal);
     };
   }, [setSidebarWidth, setDiskRotation]);
 
@@ -54,6 +77,10 @@ export const AlgebraSidebar = () => {
     e.preventDefault();
     isResizing.current = true;
     document.body.style.cursor = 'col-resize';
+  };
+
+  const startResizingTouch = (e: React.TouchEvent) => {
+    isResizing.current = true;
   };
 
   const handleDiskMouseDown = (e: React.MouseEvent) => {
@@ -66,12 +93,24 @@ export const AlgebraSidebar = () => {
     }
   };
 
+  const handleDiskTouchStart = (e: React.TouchEvent) => {
+    isDraggingDisk.current = true;
+    if (diskRef.current) {
+      const touch = e.touches[0];
+      const rect = diskRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      lastAngle.current = Math.atan2(touch.clientY - centerY, touch.clientX - centerX) * (180 / Math.PI);
+    }
+  };
+
   return (
     <aside className="w-full h-full flex flex-col bg-transparent select-none relative">
       
       {/* HEADER / DRAG HANDLE */}
       <div 
         onMouseDown={startResizing}
+        onTouchStart={startResizingTouch}
         className="h-14 flex items-center px-6 border-b border-[var(--border-color)] bg-[var(--button-bg)] cursor-col-resize active:bg-[var(--button-bg-hover)] transition-colors"
       >
         <div className="flex items-center gap-3">
@@ -219,6 +258,7 @@ export const AlgebraSidebar = () => {
                 height: `${Math.max(100, Math.min(260, sidebarWidth - 60))}px` 
               }}
               onMouseDown={handleDiskMouseDown}
+              onTouchStart={handleDiskTouchStart}
             >
               <svg 
                 ref={diskRef}
@@ -271,6 +311,7 @@ export const AlgebraSidebar = () => {
       {/* RESIZE HANDLE - Visual indicator */}
       <div 
         onMouseDown={startResizing}
+        onTouchStart={startResizingTouch}
         className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-red-500/20 transition-colors z-50 flex flex-col items-center justify-center gap-1 opacity-0 hover:opacity-100"
       >
         <div className="w-[2px] h-2 bg-[var(--text-secondary)] opacity-40"></div>
