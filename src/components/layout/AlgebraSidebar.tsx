@@ -16,7 +16,7 @@ export const AlgebraSidebar = () => {
   const isResizing = useRef(false);
   const diskRef = useRef<SVGSVGElement>(null);
 
-  const lastAngle = useRef(0);
+  const lastX = useRef(0);
 
   useEffect(() => {
     const handleMouseMoveGlobal = (e: MouseEvent) => {
@@ -24,15 +24,9 @@ export const AlgebraSidebar = () => {
         setSidebarWidth(e.clientX - 16);
       }
       if (isDraggingDisk.current && diskRef.current) {
-        const rect = diskRef.current.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-        let delta = currentAngle - lastAngle.current;
-        if (delta > 180) delta -= 360;
-        if (delta < -180) delta += 360;
-        setDiskRotation((prev) => (prev + delta + 360) % 360);
-        lastAngle.current = currentAngle;
+        const deltaX = e.clientX - lastX.current;
+        setDiskRotation((prev) => (prev + deltaX + 360) % 360);
+        lastX.current = e.clientX;
       }
     };
 
@@ -42,15 +36,10 @@ export const AlgebraSidebar = () => {
         setSidebarWidth(touch.clientX - 16);
       }
       if (isDraggingDisk.current && diskRef.current) {
-        const rect = diskRef.current.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const currentAngle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX) * (180 / Math.PI);
-        let delta = currentAngle - lastAngle.current;
-        if (delta > 180) delta -= 360;
-        if (delta < -180) delta += 360;
-        setDiskRotation((prev) => (prev + delta + 360) % 360);
-        lastAngle.current = currentAngle;
+        const deltaX = touch.clientX - lastX.current;
+        // Horizontal delta based rotation for better control on mobile
+        setDiskRotation((prev) => (prev + deltaX + 360) % 360);
+        lastX.current = touch.clientX;
       }
     };
 
@@ -85,23 +74,12 @@ export const AlgebraSidebar = () => {
 
   const handleDiskMouseDown = (e: React.MouseEvent) => {
     isDraggingDisk.current = true;
-    if (diskRef.current) {
-      const rect = diskRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      lastAngle.current = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-    }
+    lastX.current = e.clientX;
   };
 
   const handleDiskTouchStart = (e: React.TouchEvent) => {
     isDraggingDisk.current = true;
-    if (diskRef.current) {
-      const touch = e.touches[0];
-      const rect = diskRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      lastAngle.current = Math.atan2(touch.clientY - centerY, touch.clientX - centerX) * (180 / Math.PI);
-    }
+    lastX.current = e.touches[0].clientX;
   };
 
   return (
