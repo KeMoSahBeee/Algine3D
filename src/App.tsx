@@ -5,7 +5,7 @@ import { MatrixLab } from './components/layout/MatrixLab'
 import { VisualizationCanvas } from './components/visualization/VisualizationCanvas'
 import { useMatrixStore } from './store/useMatrixStore'
 import * as math from 'mathjs' 
-import { Info, ChevronDown, RotateCcw, ChevronLeft, ChevronRight, MonitorPlay, X, LayoutPanelTop } from 'lucide-react'
+import { Info, RotateCcw, ChevronLeft, ChevronRight, MonitorPlay, X, LayoutPanelTop, ChevronDown } from 'lucide-react'
 
 function App() {
   const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
@@ -14,6 +14,7 @@ function App() {
   const isKeyboardOpen = useMatrixStore(state => state.isKeyboardOpen)
   const isSidebarOpen = useMatrixStore(state => state.isSidebarOpen)
   const isResultVisible = useMatrixStore(state => state.isResultVisible)
+  const rotationAngle = useMatrixStore(state => state.rotationAngle)
   const toggleKeyboard = useMatrixStore(state => state.toggleKeyboard)
   const toggleSidebar = useMatrixStore(state => state.toggleSidebar)
   const toggleResultVisibility = useMatrixStore(state => state.toggleResultVisibility)
@@ -43,18 +44,32 @@ function App() {
     touchStartY.current = null;
   };
 
+  const isMobile = windowWidth < 640;
+  const isResultHUDActive = isResultVisible && !!currentCalculation;
+  const isAnyPanelOpen = isSidebarOpen || isKeyboardOpen || isResultHUDActive;
+  
+  // Blur logic only for Mobile
+  const shouldBlur = isMobile && isAnyPanelOpen;
+
   return (
     <div className="h-[100dvh] w-screen bg-[var(--bg-main)] overflow-hidden font-sans relative transition-colors duration-300">
       
       {/* 1. LAYER: 3D Visualization (Always Fullscreen Background) */}
-      <div className="absolute inset-0 z-0">
+      <div className={`absolute inset-0 z-0 transition-all duration-500 ${shouldBlur ? 'blur-sm scale-[1.02]' : ''}`}>
         <VisualizationCanvas />
       </div>
 
       {/* 2. LAYER: UI Elements (Overlays) */}
       
+      {/* GLOBAL BACKDROP: Blurs background buttons only on mobile */}
+      <div 
+        className={`fixed inset-0 z-30 bg-black/5 backdrop-blur-[2px] transition-all duration-500 pointer-events-none ${
+          shouldBlur ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
       {/* TOPBAR: Glassmorphism Floating Style */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] w-[96%] max-w-7xl">
+      <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-20 w-[96%] max-w-7xl transition-all duration-500 ${shouldBlur ? 'blur-md opacity-40 pointer-events-none scale-95' : 'z-[60]'}`}>
         <div className="glass-panel px-4 sm:px-6 h-14 flex items-center justify-between rounded-xl shadow-2xl border border-[var(--border-color)]">
           <TopBar />
         </div>
@@ -62,8 +77,8 @@ function App() {
 
       {/* SIDEBAR: Tactical Left Panel */}
       <div 
-        className={`absolute top-24 left-4 bottom-20 sm:bottom-10 z-40 transition-[transform,opacity] duration-500 ease-out flex gap-2 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+20px)]'
+        className={`absolute top-24 left-4 bottom-20 sm:bottom-10 z-50 transition-[transform,opacity] duration-500 ease-out flex gap-2 ${
+          isSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-[calc(100%+20px)] opacity-0 pointer-events-none'
         }`}
         style={{ width: `min(${sidebarWidth}px, 85vw)` }}
       >
@@ -74,7 +89,7 @@ function App() {
           {isSidebarOpen && (
             <button 
               onClick={toggleSidebar}
-              className="absolute top-4 right-4 p-4 sm:p-2 hover:bg-[var(--button-bg-hover)] rounded-lg text-[var(--text-secondary)] hover:text-red-500 transition-colors"
+              className="absolute top-0 right-0 h-14 w-14 flex items-center justify-center hover:bg-[var(--button-bg-hover)] text-[var(--text-secondary)] hover:text-red-500 transition-colors z-50"
             >
               <ChevronLeft size={24} className="sm:w-5 sm:h-5" />
             </button>
@@ -85,11 +100,11 @@ function App() {
       {/* COCKPIT: Bottom Tactical Console */}
       <div 
         className={`absolute bottom-10 sm:bottom-4 z-50 transition-[transform,opacity,left] duration-500 ease-out ${
-          isKeyboardOpen ? 'translate-y-0 opacity-100' : 'translate-y-[calc(100%+20px)] opacity-0'
+          isKeyboardOpen ? 'translate-y-0 opacity-100' : 'translate-y-[calc(100%+20px)] opacity-0 pointer-events-none'
         }`}
         style={{ 
           height: `${labHeight}px`,
-          left: isSidebarOpen ? (windowWidth < 640 ? '16px' : `${sidebarWidth + 32}px`) : '16px',
+          left: isSidebarOpen ? (isMobile ? '16px' : `${sidebarWidth + 32}px`) : '16px',
           right: '16px'
         }}
       >
@@ -100,7 +115,7 @@ function App() {
 
       {/* RE-OPEN BUTTONS (Floating & Minimal) */}
       {!isSidebarOpen && (
-        <div className="absolute top-24 left-6 z-50">
+        <div className={`absolute top-24 left-6 z-40 transition-all duration-500 ${isMobile && (isKeyboardOpen || isResultHUDActive) ? 'blur-md opacity-20 pointer-events-none' : ''}`}>
           <button 
             onClick={toggleSidebar}
             className="group glass-panel w-11 h-11 sm:w-14 sm:h-32 flex flex-col items-center justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
@@ -113,76 +128,86 @@ function App() {
 
       {!isKeyboardOpen && (
         <>
-          {/* MOBILE ROTATION CONTROLS */}
-          {/* Reset Button (Left-aligned) */}
-          <div className="absolute bottom-24 left-6 z-50 block sm:hidden">
-            <div className="glass-panel h-11 w-11 rounded-full border border-[var(--border-color)] flex items-center justify-center">
+          {/* MOBILE ONLY NAVIGATION DOCK */}
+          <div className="contents sm:hidden">
+            {/* Reset Button (Left-aligned) */}
+            <div className={`fixed bottom-24 left-6 z-40 transition-all duration-500 ${isSidebarOpen || isResultHUDActive ? 'blur-md opacity-20 pointer-events-none' : ''}`}>
+              <div className="glass-panel h-11 w-11 rounded-full border border-[var(--border-color)] flex items-center justify-center active-glow-red">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    useMatrixStore.getState().setRotationAngle(0);
+                  }}
+                  className="p-2 hover:bg-red-500/20 rounded-full transition-colors active:scale-90"
+                >
+                  <RotateCcw size={16} className="text-red-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Centered Dial Module */}
+            <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-36 transition-all duration-500 ${isSidebarOpen || isResultHUDActive ? 'blur-md opacity-20 pointer-events-none' : ''}`}>
+              <div className="glass-panel h-11 w-full rounded-full border border-[var(--border-color)] flex items-center px-3 gap-2 overflow-hidden relative touch-none select-none active:border-red-500/50 transition-colors">
+                <div 
+                  className="absolute inset-0 flex items-center px-2 pointer-events-auto h-full"
+                  onPointerDown={(e) => {
+                    const startX = e.clientX;
+                    const startAngle = rotationAngle;
+                    const handlePointerMove = (moveEvent: PointerEvent) => {
+                      const deltaX = moveEvent.clientX - startX;
+                      useMatrixStore.getState().setRotationAngle((startAngle + deltaX * 1.5 + 720) % 360);
+                    };
+                    const handlePointerUp = () => {
+                      window.removeEventListener('pointermove', handlePointerMove);
+                      window.removeEventListener('pointerup', handlePointerUp);
+                    };
+                    window.addEventListener('pointermove', handlePointerMove);
+                    window.addEventListener('pointerup', handlePointerUp);
+                  }}
+                >
+                  <div className="flex-1 h-full flex items-center relative overflow-hidden">
+                    <div 
+                      className="absolute inset-0 flex items-center gap-4 transition-transform duration-75 ease-out whitespace-nowrap"
+                      style={{ 
+                        transform: `translateX(${(rotationAngle * 1.2) % 100}px)`,
+                        left: '-100px',
+                        width: '400%'
+                      }}
+                    >
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <div key={i} className={`w-[1px] shrink-0 ${i % 5 === 0 ? 'h-4 bg-red-500/60' : 'h-2 bg-[var(--text-primary)] opacity-20'}`}></div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="w-10 text-right pr-1 shrink-0">
+                    <span className="text-[11px] font-black font-mono text-red-500">
+                      {Math.round(rotationAngle)}°
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Compact Mobile Toggle */}
+            <div className={`fixed bottom-24 right-6 z-40 transition-all duration-500 ${isSidebarOpen || isResultHUDActive ? 'blur-md opacity-20 pointer-events-none' : ''}`}>
               <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  useMatrixStore.getState().setRotationAngle(0);
-                }}
-                className="p-2 hover:bg-red-500/20 rounded-full transition-colors active:scale-90"
+                onClick={toggleKeyboard}
+                className="group glass-panel w-12 h-12 flex items-center justify-center shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
               >
-                <RotateCcw size={16} className="text-red-500" />
+                <MonitorPlay size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
               </button>
             </div>
           </div>
 
-          {/* Centered Dial */}
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 block sm:hidden w-[40%] min-w-[140px] max-w-[180px]">
-            <div className="glass-panel h-11 w-full rounded-full border border-[var(--border-color)] flex items-center px-3 gap-2 overflow-hidden relative touch-none select-none active:border-red-500/50 transition-colors"
-              onPointerDown={(e) => {
-                const startX = e.clientX;
-                const startAngle = useMatrixStore.getState().rotationAngle;
-                
-                const handlePointerMove = (moveEvent: PointerEvent) => {
-                  const deltaX = moveEvent.clientX - startX;
-                  useMatrixStore.getState().setRotationAngle((startAngle + deltaX * 1.5 + 720) % 360);
-                };
-                
-                const handlePointerUp = () => {
-                  window.removeEventListener('pointermove', handlePointerMove);
-                  window.removeEventListener('pointerup', handlePointerUp);
-                };
-                
-                window.addEventListener('pointermove', handlePointerMove);
-                window.addEventListener('pointerup', handlePointerUp);
-              }}
-            >
-              <div className="flex-1 h-full flex items-center relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 flex items-center gap-4 transition-transform duration-75 ease-out whitespace-nowrap"
-                  style={{ 
-                    transform: `translateX(${(useMatrixStore(s => s.rotationAngle) * 1.2) % 100}px)`,
-                    left: '-100px',
-                    width: '400%'
-                  }}
-                >
-                  {Array.from({ length: 40 }).map((_, i) => (
-                    <div key={i} className={`w-[1px] shrink-0 ${i % 5 === 0 ? 'h-4 bg-red-500/60' : 'h-2 bg-[var(--text-primary)] opacity-20'}`}></div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="w-10 text-right pr-1 shrink-0">
-                <span className="text-[11px] font-black font-mono text-red-500">
-                  {Math.round(useMatrixStore(s => s.rotationAngle))}°
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute bottom-24 right-6 z-50">
+          {/* PC ONLY COCKPIT TOGGLE (Original Style) */}
+          <div className={`fixed bottom-4 right-6 z-40 hidden sm:block transition-all duration-500`}>
             <button 
               onClick={toggleKeyboard}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              className="group glass-panel w-11 h-11 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+              className="group glass-panel px-8 h-12 flex items-center justify-center gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
             >
               <MonitorPlay size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Cockpit On</span>
-              <ChevronDown size={18} className="hidden sm:block rotate-180 text-[var(--text-secondary)] opacity-50" />
+              <span className="text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60 uppercase">Cockpit On</span>
+              <ChevronDown size={18} className="rotate-180 text-[var(--text-secondary)] opacity-50" />
             </button>
           </div>
         </>
@@ -190,7 +215,7 @@ function App() {
 
       {/* RESULT OVERLAY TOGGLE (When Hidden) */}
       {!isResultVisible && currentCalculation && (
-        <div className={`absolute right-6 z-50 transition-all ${windowWidth < 640 ? 'top-24' : 'top-24 sm:top-24'}`}>
+        <div className={`absolute right-20 sm:right-24 z-40 transition-all duration-500 ${windowWidth < 640 ? 'top-24' : 'top-24 sm:top-24'} ${isMobile && (isSidebarOpen || isKeyboardOpen) ? 'blur-md opacity-20 pointer-events-none' : ''}`}>
           <button 
             onClick={toggleResultVisibility}
             className="group glass-panel w-11 h-11 sm:w-auto sm:px-4 sm:h-10 flex items-center justify-center gap-0 sm:gap-3 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
@@ -205,7 +230,7 @@ function App() {
 
       {/* RESULT OVERLAY (Floating HUD) */}
       {currentCalculation && isResultVisible && (
-        <div className={`absolute right-4 sm:right-6 z-30 w-[280px] sm:max-w-[320px] pointer-events-auto transition-all ${isSidebarOpen && windowWidth < 640 ? 'top-1/2 -translate-y-1/2' : 'top-24 sm:top-24'}`}>
+        <div className={`absolute right-4 sm:right-6 z-50 w-[280px] sm:max-w-[320px] pointer-events-auto transition-all ${isSidebarOpen && windowWidth < 640 ? 'top-1/2 -translate-y-1/2' : 'top-24 sm:top-24'}`}>
           <div className="glass-panel p-4 sm:p-4 shadow-2xl rounded-2xl border-l-4 border-l-red-500 transition-all max-h-[50vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-[var(--text-secondary)]">

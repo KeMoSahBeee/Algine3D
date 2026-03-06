@@ -81,10 +81,10 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
   currentCalculation: null,
   history: [],
   isSidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 640 : true,
-  isKeyboardOpen: false,
+  isKeyboardOpen: typeof window !== 'undefined' ? window.innerWidth >= 640 : false,
   isResultVisible: false,
-  labHeight: 380,
-  sidebarWidth: 380,
+  labHeight: 320,
+  sidebarWidth: 300,
   rotationAngle: 0,
   theme: 'dark',
   undoStack: [],
@@ -112,8 +112,8 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
     
     // Auto-resize sidebar based on cols with strict minimum for 5x5
     const maxCols = Math.max(state.colsA, state.colsB);
-    state.sidebarWidth = Math.max(state.sidebarWidth, maxCols * 72 + 80);
-    if (maxCols === 5) state.sidebarWidth = Math.max(state.sidebarWidth, 420);
+    state.sidebarWidth = Math.max(state.sidebarWidth, maxCols * 60 + 100);
+    if (maxCols === 5) state.sidebarWidth = Math.max(state.sidebarWidth, 400);
     
     state.currentCalculation = null;
   })),
@@ -141,6 +141,7 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
     const nextValue = !state.isKeyboardOpen;
     return { 
       isKeyboardOpen: nextValue,
+      labHeight: isMobile && nextValue ? Math.max(state.labHeight, 520) : state.labHeight,
       ...(isMobile && nextValue ? { isSidebarOpen: false, isResultVisible: false } : {})
     };
   }),
@@ -149,6 +150,7 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
     const nextValue = !state.isSidebarOpen;
     return { 
       isSidebarOpen: nextValue,
+      sidebarWidth: isMobile && nextValue ? window.innerWidth * 0.9 : state.sidebarWidth,
       ...(isMobile && nextValue ? { isKeyboardOpen: false, isResultVisible: false } : {})
     };
   }),
@@ -170,15 +172,16 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
     };
   }),
   setLabHeight: (height) => set(state => {
-    const minH = state.rowsC === 5 ? 420 : 320;
-    const maxH = window.innerHeight * 0.9;
-    return { labHeight: Math.max(Math.min(minH, maxH), Math.min(height, maxH)) };
+    const isMobile = window.innerWidth < 640;
+    const minH = isMobile ? 520 : (state.rowsC === 5 ? 420 : 320);
+    const maxH = window.innerHeight * 0.95;
+    return { labHeight: Math.max(minH, Math.min(height, maxH)) };
   }),
   setSidebarWidth: (width) => set(state => {
     const isMobile = window.innerWidth < 640;
-    const minW = Math.max(state.colsA, state.colsB) === 5 ? 420 : 340;
+    const minW = isMobile ? window.innerWidth * 0.9 : (Math.max(state.colsA, state.colsB) === 5 ? 400 : 280);
     const maxW = isMobile ? window.innerWidth * 0.95 : window.innerWidth * 0.6;
-    return { sidebarWidth: Math.max(Math.min(minW, maxW), Math.min(width, maxW)) };
+    return { sidebarWidth: Math.max(minW, Math.min(width, maxW)) };
   }),
   setRotationAngle: (angle) => set((state) => ({ 
     rotationAngle: typeof angle === 'function' ? angle(state.rotationAngle) : angle 

@@ -111,3 +111,11 @@ body {
 .active-glow-red {
   animation: pulse-red 2s infinite;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

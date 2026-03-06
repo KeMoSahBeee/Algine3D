@@ -68,7 +68,7 @@ export const AlgebraSidebar = () => {
     document.body.style.cursor = 'col-resize';
   };
 
-  const startResizingTouch = (e: React.TouchEvent) => {
+  const startResizingTouch = () => {
     isResizing.current = true;
   };
 

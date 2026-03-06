@@ -60,7 +60,7 @@ export const MatrixCell = ({ matrix, index }: Props) => {
       data-matrix={matrix}
       data-index={index}
       className={cn(
-        "w-12 h-12 bg-[var(--button-bg)] border border-[var(--border-color)] text-center text-[14px] font-black font-mono transition-all",
+        "w-9 h-9 sm:w-12 sm:h-12 bg-[var(--button-bg)] border border-[var(--border-color)] text-center text-[12px] sm:text-[14px] font-black font-mono transition-all",
         "focus:bg-[var(--button-bg-hover)] focus:text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 rounded-lg",
         "placeholder:text-[var(--text-secondary)] text-[var(--text-primary)]",
         "opacity-100 dark:opacity-90", // Solid in light, slightly soft in dark

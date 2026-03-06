@@ -346,9 +346,8 @@ export const VisualizationCanvas = () => {
         <VisualizationScene isPanningMode={isPanningMode} />
       </Canvas>
 
-      {/* Floating Control Overlay - Moved up to avoid clashing with Cockpit */}
-      <div className="absolute top-44 right-6 z-20 flex flex-col gap-3">
-        {/* Toggle Panning Mode */}
+      {/* Floating Control Overlay - Moved up to top area for better mobile layout */}
+      <div className="absolute top-24 right-6 z-20 flex flex-col gap-3">        {/* Toggle Panning Mode */}
         <button 
           onClick={() => setIsPanningMode(!isPanningMode)}
           className={`group glass-panel w-11 h-11 sm:w-12 sm:h-12 flex flex-col items-center justify-center shadow-2xl transition-all active:scale-90 rounded-full border ${
