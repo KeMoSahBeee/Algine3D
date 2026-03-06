@@ -213,7 +213,7 @@ export const AlgebraSidebar = () => {
         </div>
 
         {/* ROTATION DISK - More minimal tactical look */}
-        <div className="space-y-6">
+        <div className="hidden md:block space-y-6">
           <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2">
             <div className="flex items-center gap-2">
               <RotateCcw size={14} className="text-[var(--text-secondary)]" />

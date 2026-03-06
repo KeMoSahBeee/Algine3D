@@ -80,7 +80,7 @@ export const useMatrixStore = create<MatrixState>()((set, get) => ({
   gridC: Array(9).fill(0),
   currentCalculation: null,
   history: [],
-  isSidebarOpen: true,
+  isSidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 640 : true,
   isKeyboardOpen: false,
   isResultVisible: false,
   labHeight: 380,

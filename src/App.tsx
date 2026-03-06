@@ -112,18 +112,80 @@ function App() {
       )}
 
       {!isKeyboardOpen && (
-        <div className="absolute bottom-24 right-6 z-50">
-          <button 
-            onClick={toggleKeyboard}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            className="group glass-panel w-11 h-11 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
-          >
-            <MonitorPlay size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Cockpit On</span>
-            <ChevronDown size={18} className="hidden sm:block rotate-180 text-[var(--text-secondary)] opacity-50" />
-          </button>
-        </div>
+        <>
+          {/* MOBILE ROTATION CONTROLS */}
+          {/* Reset Button (Left-aligned) */}
+          <div className="absolute bottom-24 left-6 z-50 block sm:hidden">
+            <div className="glass-panel h-11 w-11 rounded-full border border-[var(--border-color)] flex items-center justify-center">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  useMatrixStore.getState().setRotationAngle(0);
+                }}
+                className="p-2 hover:bg-red-500/20 rounded-full transition-colors active:scale-90"
+              >
+                <RotateCcw size={16} className="text-red-500" />
+              </button>
+            </div>
+          </div>
+
+          {/* Centered Dial */}
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 block sm:hidden w-[40%] min-w-[140px] max-w-[180px]">
+            <div className="glass-panel h-11 w-full rounded-full border border-[var(--border-color)] flex items-center px-3 gap-2 overflow-hidden relative touch-none select-none active:border-red-500/50 transition-colors"
+              onPointerDown={(e) => {
+                const startX = e.clientX;
+                const startAngle = useMatrixStore.getState().rotationAngle;
+                
+                const handlePointerMove = (moveEvent: PointerEvent) => {
+                  const deltaX = moveEvent.clientX - startX;
+                  useMatrixStore.getState().setRotationAngle((startAngle + deltaX * 1.5 + 720) % 360);
+                };
+                
+                const handlePointerUp = () => {
+                  window.removeEventListener('pointermove', handlePointerMove);
+                  window.removeEventListener('pointerup', handlePointerUp);
+                };
+                
+                window.addEventListener('pointermove', handlePointerMove);
+                window.addEventListener('pointerup', handlePointerUp);
+              }}
+            >
+              <div className="flex-1 h-full flex items-center relative overflow-hidden">
+                <div 
+                  className="absolute inset-0 flex items-center gap-4 transition-transform duration-75 ease-out whitespace-nowrap"
+                  style={{ 
+                    transform: `translateX(${(useMatrixStore(s => s.rotationAngle) * 1.2) % 100}px)`,
+                    left: '-100px',
+                    width: '400%'
+                  }}
+                >
+                  {Array.from({ length: 40 }).map((_, i) => (
+                    <div key={i} className={`w-[1px] shrink-0 ${i % 5 === 0 ? 'h-4 bg-red-500/60' : 'h-2 bg-[var(--text-primary)] opacity-20'}`}></div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="w-10 text-right pr-1 shrink-0">
+                <span className="text-[11px] font-black font-mono text-red-500">
+                  {Math.round(useMatrixStore(s => s.rotationAngle))}°
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute bottom-24 right-6 z-50">
+            <button 
+              onClick={toggleKeyboard}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="group glass-panel w-11 h-11 sm:w-auto sm:px-8 sm:h-12 flex items-center justify-center sm:justify-center gap-0 sm:gap-4 shadow-2xl hover:bg-[var(--button-bg-hover)] transition-all active:scale-90 text-[var(--text-primary)] rounded-full border border-[var(--border-color)] active-glow-red"
+            >
+              <MonitorPlay size={20} className="text-red-500 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:block text-[10px] font-black tracking-[0.4em] text-[var(--text-primary)] opacity-60">Cockpit On</span>
+              <ChevronDown size={18} className="hidden sm:block rotate-180 text-[var(--text-secondary)] opacity-50" />
+            </button>
+          </div>
+        </>
       )}
 
       {/* RESULT OVERLAY TOGGLE (When Hidden) */}
